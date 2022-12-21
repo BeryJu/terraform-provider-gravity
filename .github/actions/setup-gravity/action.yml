@@ -1,0 +1,64 @@
+name: 'gravity Setup'
+description: 'Sets up an gravity test environment'
+inputs:
+  wait:
+    description: 'If the action should wait for authentik to be available'
+    required: false
+    default: "true"
+
+outputs:
+  admin_token:
+    description: "API token for admin User"
+    value: ${{ steps.credentials.outputs.admin_token }}
+  admin_password:
+    description: "Password for admin User"
+    value: ${{ steps.credentials.outputs.admin_password }}
+  http_url:
+    description: "Base URL to access authentik at"
+    value: http://localhost:9009
+  server_container_id:
+    description: id of the server container
+    value: ${{ steps.run.outputs.server_container }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate credentials
+      shell: bash
+      id: credentials
+      run: |
+        ADMIN_TOKEN=$(openssl rand -base64 32)
+        ADMIN_PASSWORD=$(openssl rand -base64 32)
+        echo "admin_token=${ADMIN_TOKEN}" >> $GITHUB_OUTPUT
+        echo "admin_password=${ADMIN_PASSWORD}" >> $GITHUB_OUTPUT
+
+        cat > docker-compose.override.yml <<EOT
+        version: "3.4"
+        services:
+          gravity:
+            environment:
+              LISTEN_ONLY: "true"
+              ADMIN_TOKEN: "${ADMIN_TOKEN}"
+              ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+        EOT
+
+    - name: Run
+      shell: bash
+      id: run
+      run: |
+        export COMPOSE_PROJECT_NAME=gravity
+        wget https://raw.githubusercontent.com/BeryJu/gravity/main/docker-compose.yml
+        docker-compose pull -q
+        docker-compose up -d
+
+        function cleanup() {
+          docker-compose logs
+        }
+        trap cleanup EXIT
+
+        server_container=$(docker ps -f label=com.docker.compose.project=gravity -f label=com.docker.compose.service=gravity --format "{{.ID}}")
+        echo "::set-output name=server_container::${server_container}"
+
+        if [ "${{ inputs.wait }}" = "true" ]; then
+          timeout 600 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8009/healthz/live)" != "200" ]]; do sleep 5; done' || false
+        fi
