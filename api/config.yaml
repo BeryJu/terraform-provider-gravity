@@ -1,0 +1,9 @@
+templateDir: /local/api/templates/
+additionalProperties:
+  packageName: terraform-provider-gravity
+  enumClassPrefix: true
+  useOneOfDiscriminatorLookup: true
+files:
+  README.mustache:
+    templateType: SupportingFiles
+    destinationFilename: README.md
