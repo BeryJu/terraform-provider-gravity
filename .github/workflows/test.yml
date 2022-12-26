@@ -6,6 +6,8 @@ on:
   push:
     paths-ignore:
       - 'README.md'
+    branches:
+      - main
 
 permissions:
   contents: read
