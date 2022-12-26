@@ -41,12 +41,14 @@ runs:
               ADMIN_TOKEN: "${ADMIN_TOKEN}"
               ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
               LOG_LEVEL: "debug"
+              INSTANCE_IP: "0.0.0.0"
         EOT
 
     - name: Run
       shell: bash
       id: run
       run: |
+        set -x
         export COMPOSE_PROJECT_NAME=gravity
         wget https://raw.githubusercontent.com/BeryJu/gravity/main/docker-compose.yml
         docker-compose pull -q
@@ -58,7 +60,7 @@ runs:
         trap cleanup EXIT
 
         server_container=$(docker ps -f label=com.docker.compose.project=gravity -f label=com.docker.compose.service=gravity --format "{{.ID}}")
-        echo "::set-output name=server_container::${server_container}"
+        echo "server_container=${server_container}" >> $GITHUB_OUTPUT
 
         if [ "${{ inputs.wait }}" = "true" ]; then
           timeout 600 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8009/healthz/live)" != "200" ]]; do sleep 5; done' || false
