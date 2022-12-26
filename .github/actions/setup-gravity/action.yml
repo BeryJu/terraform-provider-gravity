@@ -40,6 +40,7 @@ runs:
               LISTEN_ONLY: "true"
               ADMIN_TOKEN: "${ADMIN_TOKEN}"
               ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+              LOG_LEVEL: "debug"
         EOT
 
     - name: Run
