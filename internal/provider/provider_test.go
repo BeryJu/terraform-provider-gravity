@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -16,7 +17,12 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 }
 
 func testAccPreCheck(t *testing.T) {
-	// You can add code here to run prior to any test case execution, for example assertions
-	// about the appropriate environment variables being set are common to see in a pre-check
-	// function.
+	testEnvIsSet("GRAVITY_ENDPOINT", t)
+	testEnvIsSet("GRAVITY_TOKEN", t)
+}
+
+func testEnvIsSet(k string, t *testing.T) {
+	if v := os.Getenv(k); v == "" {
+		t.Fatalf("%[1]s must be set for acceptance tests", k)
+	}
 }

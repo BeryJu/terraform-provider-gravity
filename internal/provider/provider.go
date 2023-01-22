@@ -42,7 +42,7 @@ func (p *GravityProvider) Schema(ctx context.Context, req provider.SchemaRequest
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
 				MarkdownDescription: "Gravity API Endpoint, listens by default on port 9009.",
 			},
 			"insecure": schema.BoolAttribute{
@@ -50,7 +50,7 @@ func (p *GravityProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				MarkdownDescription: "Set to true to ignore any HTTPS Certificate errors",
 			},
 			"token": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
 				Sensitive:           true,
 				MarkdownDescription: "Token to authenticate against the API with.",
 			},

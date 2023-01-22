@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"beryju.io/gravity/api"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -28,8 +29,14 @@ type DNSZoneResource struct {
 
 // DNSZoneResourceModel describes the resource data model.
 type DNSZoneResourceModel struct {
+	Id types.String `tfsdk:"id"`
+
 	Zone          types.String `tfsdk:"zone"`
 	Authoritative types.Bool   `tfsdk:"authoritative"`
+	Handlers      []struct {
+		Type   string                `tfsdk:"type"`
+		Config map[string]attr.Value `tfsdk:"config"`
+	} `tfsdk:"handlers"`
 }
 
 func (r *DNSZoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -39,14 +46,34 @@ func (r *DNSZoneResource) Metadata(ctx context.Context, req resource.MetadataReq
 func (e *DNSZoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"zone": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"authoritative": schema.StringAttribute{
+			"authoritative": schema.BoolAttribute{
 				Optional: true,
+			},
+			"handlers": schema.ListNestedAttribute{
+				Required: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Required: true,
+						},
+						"config": schema.MapAttribute{
+							ElementType: types.StringType,
+							Required:    true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -82,15 +109,26 @@ func (r *DNSZoneResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	_, err := r.client.RolesDnsApi.DnsPutZones(ctx).DnsAPIZonesPutInput(api.DnsAPIZonesPutInput{
+	input := api.DnsAPIZonesPutInput{
 		Authoritative: data.Authoritative.ValueBool(),
-	}).Zone(data.Zone.ValueString()).Execute()
+	}
+	input.HandlerConfigs = make([]map[string]string, len(data.Handlers))
+	for i, hc := range data.Handlers {
+		config := map[string]string{
+			"type": hc.Type,
+		}
+		for key, value := range hc.Config {
+			config[key] = value.String()
+		}
+		input.HandlerConfigs[i] = config
+	}
+	_, err := r.client.RolesDnsApi.DnsPutZones(ctx).DnsAPIZonesPutInput(input).Zone(data.Zone.ValueString()).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create zone, got error: %s", err))
 		return
 	}
+	data.Id = data.Zone
 
-	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -117,7 +155,6 @@ func (r *DNSZoneResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	data.Authoritative = types.BoolValue(zone.Authoritative)
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -131,14 +168,6 @@ func (r *DNSZoneResource) Update(ctx context.Context, req resource.UpdateRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := d.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update example, got error: %s", err))
-	//     return
-	// }
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
