@@ -1,5 +1,5 @@
-beryju.io/gravity v0.3.15 h1:BUhyIJPLJ6pQVwbcVnMPsDLnhX2kfBgMpgyLF/mdMvQ=
-beryju.io/gravity v0.3.15/go.mod h1:RMBcCMTO7+IEhLftsNVfByxVlf0Y3yr4tZolGktNGK0=
+beryju.io/gravity v0.3.17 h1:pgYwgAAvy88mrqfCqDnedex4TBBpPLCtIjDV+TKMrEM=
+beryju.io/gravity v0.3.17/go.mod h1:dQHgu+2fpGBiNu0EIesVPo7B0ZpAVeiv1cha0N6Y96M=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
