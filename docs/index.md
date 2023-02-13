@@ -14,7 +14,10 @@ description: |-
 
 ```terraform
 provider "gravity" {
-  # example configuration here
+  url = "http://my-gravity.domain.td:8008"
+  # Ignore Certificate errors when using HTTPS
+  insecure = false
+  token    = "my-token"
 }
 ```
 
@@ -23,9 +26,9 @@ provider "gravity" {
 
 ### Required
 
-- `endpoint` (String) Gravity API Endpoint, listens by default on port 9009.
-- `token` (String, Sensitive) Token to authenticate against the API with.
+- `token` (String, Sensitive) The Gravity API token, can optionally be passed as `GRAVITY_TOKEN` environmental variable
+- `url` (String) The Gravity API endpoint, can optionally be passed as `GRAVITY_URL` environmental variable
 
 ### Optional
 
-- `insecure` (Boolean) Set to true to ignore any HTTPS Certificate errors
+- `insecure` (Boolean) Whether to skip TLS verification, can optionally be passed as `GRAVITY_INSECURE` environmental variable

@@ -4,20 +4,27 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// testAccProtoV6ProviderFactories are used to instantiate a provider during
-// acceptance testing. The factory function will be invoked for every Terraform
-// CLI command executed to create a provider server to which the CLI can
-// reattach.
-var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"gravity": providerserver.NewProtocol6WithError(New("test")()),
+// providerFactories are used to instantiate a provider during acceptance testing.
+// The factory function will be invoked for every Terraform CLI command executed
+// to create a provider server to which the CLI can reattach.
+var providerFactories = map[string]func() (*schema.Provider, error){
+	"gravity": func() (*schema.Provider, error) {
+		return Provider("test", false), nil
+	},
+}
+
+func TestProvider(t *testing.T) {
+	p := Provider("testing", false)
+	if err := p.InternalValidate(); err != nil {
+		t.Fatalf("err: %[1]s", err)
+	}
 }
 
 func testAccPreCheck(t *testing.T) {
-	testEnvIsSet("GRAVITY_ENDPOINT", t)
+	testEnvIsSet("GRAVITY_URL", t)
 	testEnvIsSet("GRAVITY_TOKEN", t)
 }
 

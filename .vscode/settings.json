@@ -2,7 +2,7 @@
     "go.testEnvVars": {
         "TF_LOG": "trace",
         "TF_ACC": "1",
-        "GRAVITY_ENDPOINT": "http://localhost:8008",
+        "GRAVITY_URL": "http://localhost:8008",
         "GRAVITY_TOKEN": "test",
     },
     "go.testFlags": ["-count=1"]

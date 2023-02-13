@@ -2,76 +2,38 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"beryju.io/gravity/api"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Ensure provider defined types fully satisfy framework interfaces
-var _ resource.Resource = &DNSZoneResource{}
-var _ resource.ResourceWithImportState = &DNSZoneResource{}
-
-func NewDNSZoneResource() resource.Resource {
-	return &DNSZoneResource{}
-}
-
-// DNSZoneResource defines the resource implementation.
-type DNSZoneResource struct {
-	client *api.APIClient
-}
-
-// DNSZoneResourceModel describes the resource data model.
-type DNSZoneResourceModel struct {
-	Id types.String `tfsdk:"id"`
-
-	Zone          types.String `tfsdk:"zone"`
-	Authoritative types.Bool   `tfsdk:"authoritative"`
-	Handlers      []struct {
-		Type   string                `tfsdk:"type"`
-		Config map[string]attr.Value `tfsdk:"config"`
-	} `tfsdk:"handlers"`
-}
-
-func (r *DNSZoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_dns_zone"
-}
-
-func (e *DNSZoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"zone": schema.StringAttribute{
+func resourceDNSZone() *schema.Resource {
+	return &schema.Resource{
+		CreateContext: resourceDNSZoneCreate,
+		ReadContext:   resourceDNSZoneRead,
+		UpdateContext: resourceDNSZoneUpdate,
+		DeleteContext: resourceDNSZoneDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Schema: map[string]*schema.Schema{
+			"zone": {
+				Type:     schema.TypeString,
 				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
 			},
-			"authoritative": schema.BoolAttribute{
+			"authoritative": {
+				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  false,
 			},
-			"handlers": schema.ListNestedAttribute{
+			"handlers": {
+				Type:     schema.TypeList,
 				Required: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Required: true,
-						},
-						"config": schema.MapAttribute{
-							ElementType: types.StringType,
-							Required:    true,
-						},
+				Elem: &schema.Schema{
+					Type: schema.TypeMap,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
 					},
 				},
 			},
@@ -79,119 +41,69 @@ func (e *DNSZoneResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 }
 
-func (r *DNSZoneResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
+func resourceDNSZoneSchemaToModel(d *schema.ResourceData) *api.DnsAPIZonesPutInput {
+	m := api.DnsAPIZonesPutInput{}
+	m.Authoritative = d.Get("authoritative").(bool)
+
+	rawHandlers := d.Get("handlers").([]interface{})
+	handlers := make([]map[string]string, len(rawHandlers))
+	for i, rh := range rawHandlers {
+		m := make(map[string]string)
+		for k, v := range rh.(map[string]interface{}) {
+			m[k] = v.(string)
+		}
+		handlers[i] = m
 	}
-
-	client, ok := req.ProviderData.(*api.APIClient)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *api.APIClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-
-		return
-	}
-
-	r.client = client
+	m.HandlerConfigs = handlers
+	return &m
 }
 
-func (r *DNSZoneResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *DNSZoneResourceModel
+func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*APIClient)
 
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	req := resourceDNSZoneSchemaToModel(d)
+	name := d.Get("zone").(string)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	input := api.DnsAPIZonesPutInput{
-		Authoritative: data.Authoritative.ValueBool(),
-	}
-	input.HandlerConfigs = make([]map[string]string, len(data.Handlers))
-	for i, hc := range data.Handlers {
-		config := map[string]string{
-			"type": hc.Type,
-		}
-		for key, value := range hc.Config {
-			config[key] = value.String()
-		}
-		input.HandlerConfigs[i] = config
-	}
-	_, err := r.client.RolesDnsApi.DnsPutZones(ctx).DnsAPIZonesPutInput(input).Zone(data.Zone.ValueString()).Execute()
+	hr, err := c.client.RolesDnsApi.DnsPutZones(ctx).Zone(name).DnsAPIZonesPutInput(*req).Execute()
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create zone, got error: %s", err))
-		return
+		return httpToDiag(d, hr, err)
 	}
-	data.Id = data.Zone
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	d.SetId(name)
+	return resourceDNSZoneRead(ctx, d, m)
 }
 
-func (r *DNSZoneResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *DNSZoneResourceModel
+func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+	c := m.(*APIClient)
 
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	zones, _, err := r.client.RolesDnsApi.DnsGetZones(ctx).Execute()
+	res, hr, err := c.client.RolesDnsApi.DnsGetZones(ctx).Name(d.Id()).Execute()
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read zones, got error: %s", err))
-		return
-	}
-	var zone api.DnsAPIZone
-	for _, z := range zones.Zones {
-		if z.Name == data.Zone.ValueString() {
-			zone = z
-		}
+		return httpToDiag(d, hr, err)
 	}
 
-	data.Authoritative = types.BoolValue(zone.Authoritative)
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if len(res.Zones) < 1 {
+		d.SetId("")
+		return diag.Diagnostics{}
+	}
+	setWrapper(d, "zone", res.Zones[0].Name)
+	setWrapper(d, "authoritative", res.Zones[0].Authoritative)
+	setWrapper(d, "handlers", res.Zones[0].HandlerConfigs)
+	return diags
 }
 
-func (r *DNSZoneResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *DNSZoneResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
+func resourceDNSZoneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	diag := resourceDNSZoneCreate(ctx, d, m)
+	if diag != nil {
+		return diag
 	}
-
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	return resourceDNSZoneRead(ctx, d, m)
 }
 
-func (r *DNSZoneResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *DNSZoneResourceModel
-
-	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
+func resourceDNSZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*APIClient)
+	hr, err := c.client.RolesDnsApi.DnsDeleteZones(ctx).Zone(d.Id()).Execute()
+	if err != nil {
+		return httpToDiag(d, hr, err)
 	}
-
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := d.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete example, got error: %s", err))
-	//     return
-	// }
-}
-
-func (r *DNSZoneResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("zone"), req, resp)
+	return diag.Diagnostics{}
 }

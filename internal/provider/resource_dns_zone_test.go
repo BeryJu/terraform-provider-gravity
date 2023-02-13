@@ -4,38 +4,39 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccDNSZoneResource(t *testing.T) {
-	zoneName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+func TestAccResourceDNSZone(t *testing.T) {
+	rName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDNSZoneResourceConfig(zoneName),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gravity_dns_zone.test", "zone", zoneName),
-					resource.TestCheckResourceAttr("gravity_dns_zone.test", "id", zoneName),
+				Config: testAccResourceDNSZoneSimple(rName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "zone", fmt.Sprintf("%s.", rName)),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "authoritative", "true"),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handlers.#", "1"),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handlers.0.type", "etcd"),
 				),
 			},
 		},
 	})
 }
 
-func testAccDNSZoneResourceConfig(zoneName string) string {
+func testAccResourceDNSZoneSimple(name string) string {
 	return fmt.Sprintf(`
-resource "gravity_dns_zone" "test" {
-  zone = %[1]q
-
-  handlers = [
-	{
-		type = "etcd",
-		config = {},
-	}
+resource "gravity_dns_zone" "name" {
+  zone          = "%[1]s."
+  authoritative = true
+  handlers      = [
+    {
+      type = "etcd",
+    }
   ]
 }
-`, zoneName)
+`, name)
 }

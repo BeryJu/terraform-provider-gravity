@@ -2,7 +2,7 @@ name: 'gravity Setup'
 description: 'Sets up an gravity test environment'
 inputs:
   wait:
-    description: 'If the action should wait for authentik to be available'
+    description: 'If the action should wait for gravity to be available'
     required: false
     default: "true"
 
@@ -14,7 +14,7 @@ outputs:
     description: "Password for admin User"
     value: ${{ steps.credentials.outputs.admin_password }}
   http_url:
-    description: "Base URL to access authentik at"
+    description: "Base URL to access gravity at"
     value: http://localhost:9009
   server_container_id:
     description: id of the server container
