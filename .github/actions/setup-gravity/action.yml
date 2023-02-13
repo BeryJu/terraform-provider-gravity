@@ -15,7 +15,7 @@ outputs:
     value: ${{ steps.credentials.outputs.admin_password }}
   http_url:
     description: "Base URL to access gravity at"
-    value: http://localhost:9009
+    value: http://localhost:8008
   server_container_id:
     description: id of the server container
     value: ${{ steps.run.outputs.server_container }}
