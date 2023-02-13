@@ -21,6 +21,7 @@ func resourceDNSZone() *schema.Resource {
 			"zone": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"authoritative": {
 				Type:     schema.TypeBool,

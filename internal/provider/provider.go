@@ -59,7 +59,8 @@ func Provider(version string, testing bool) *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"gravity_dns_zone": resourceDNSZone(),
+			"gravity_dns_zone":   resourceDNSZone(),
+			"gravity_dns_record": resourceDNSRecord(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure(version, testing),

@@ -65,7 +65,7 @@ jobs:
         id: gravity
       - env:
           TF_ACC: "1"
-          GRAVITY_ENDPOINT: ${{ steps.gravity.outputs.http_url }}
+          GRAVITY_URL: ${{ steps.gravity.outputs.http_url }}
           GRAVITY_TOKEN: ${{ steps.gravity.outputs.admin_token }}
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
