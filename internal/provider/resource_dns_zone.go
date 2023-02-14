@@ -18,7 +18,7 @@ func resourceDNSZone() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
-			"zone": {
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -45,17 +45,7 @@ func resourceDNSZone() *schema.Resource {
 func resourceDNSZoneSchemaToModel(d *schema.ResourceData) *api.DnsAPIZonesPutInput {
 	m := api.DnsAPIZonesPutInput{}
 	m.Authoritative = d.Get("authoritative").(bool)
-
-	rawHandlers := d.Get("handlers").([]interface{})
-	handlers := make([]map[string]string, len(rawHandlers))
-	for i, rh := range rawHandlers {
-		m := make(map[string]string)
-		for k, v := range rh.(map[string]interface{}) {
-			m[k] = v.(string)
-		}
-		handlers[i] = m
-	}
-	m.HandlerConfigs = handlers
+	m.HandlerConfigs = tfListMap(d.Get("handlers").([]interface{}))
 	return &m
 }
 
@@ -63,7 +53,7 @@ func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	c := m.(*APIClient)
 
 	req := resourceDNSZoneSchemaToModel(d)
-	name := d.Get("zone").(string)
+	name := d.Get("name").(string)
 
 	hr, err := c.client.RolesDnsApi.DnsPutZones(ctx).Zone(name).DnsAPIZonesPutInput(*req).Execute()
 	if err != nil {
@@ -86,7 +76,7 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 		d.SetId("")
 		return diag.Diagnostics{}
 	}
-	setWrapper(d, "zone", res.Zones[0].Name)
+	setWrapper(d, "name", res.Zones[0].Name)
 	setWrapper(d, "authoritative", res.Zones[0].Authoritative)
 	setWrapper(d, "handlers", res.Zones[0].HandlerConfigs)
 	return diags

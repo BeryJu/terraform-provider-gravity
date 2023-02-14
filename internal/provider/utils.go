@@ -2,6 +2,7 @@ package provider
 
 import (
 	"bytes"
+	"hash/crc32"
 	"io"
 	"log"
 	"net/http"
@@ -40,4 +41,37 @@ func httpToDiag(d *schema.ResourceData, r *http.Response, err error) diag.Diagno
 	}
 	log.Printf("[DEBUG] Gravity: error response: %s", buff.String())
 	return diag.Errorf("HTTP Error '%s' during request '%s %s': \"%s\"", err.Error(), r.Request.Method, r.Request.URL.Path, buff.String())
+}
+
+func tfMap(raw map[string]interface{}) map[string]string {
+	x := make(map[string]string)
+	for k, v := range raw {
+		x[k] = v.(string)
+	}
+	return x
+}
+
+func tfListMap(raw []interface{}) []map[string]string {
+	values := make([]map[string]string, len(raw))
+	for i, rh := range raw {
+		values[i] = tfMap(rh.(map[string]interface{}))
+	}
+	return values
+}
+
+// StringHashcode hashes a string to a unique hashcode.
+//
+// crc32 returns a uint32, but for our use we need
+// and non negative integer. Here we cast to an integer
+// and invert it if the result is negative.
+func StringHashcode(s string) int {
+	v := int(crc32.ChecksumIEEE([]byte(s)))
+	if v >= 0 {
+		return v
+	}
+	if -v >= 0 {
+		return -v
+	}
+	// v == MinInt
+	return 0
 }
