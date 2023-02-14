@@ -45,6 +45,10 @@ resource "gravity_dhcp_scope" "name" {
     // value = "10.10.10.1"
 	value64 = [base64encode("10.10.10.1")]
   }
+  dns {
+	zone = "foo.bar."
+	add_zone_in_hostname = true
+  }
 }
 `, name)
 }

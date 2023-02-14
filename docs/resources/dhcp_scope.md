@@ -49,6 +49,27 @@ resource "gravity_dhcp_scope" "name" {
     tag   = 43
     value = "10.10.10.2"
   }
+
+  # DNS Options
+  dns {
+    # When `zone` is also configured in gravity, DNS records are created automatically
+    zone                 = gravity_dns_zone.example.zone
+    add_zone_in_hostname = true
+  }
+}
+
+resource "gravity_dns_zone" "example" {
+  # Make sure zone ends with a trailing slash
+  zone          = "my-domain.com."
+  authoritative = true
+  handlers = [
+    {
+      type = "memory",
+    },
+    {
+      type = "etcd",
+    },
+  ]
 }
 ```
 
@@ -64,12 +85,23 @@ resource "gravity_dhcp_scope" "name" {
 ### Optional
 
 - `default` (Boolean) Defaults to `false`.
+- `dns` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--dns))
 - `lease_ttl` (Number) Defaults to `86400`.
 - `option` (Block Set) (see [below for nested schema](#nestedblock--option))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--dns"></a>
+### Nested Schema for `dns`
+
+Optional:
+
+- `add_zone_in_hostname` (Boolean) Defaults to `false`.
+- `search` (List of String)
+- `zone` (String)
+
 
 <a id="nestedblock--option"></a>
 ### Nested Schema for `option`

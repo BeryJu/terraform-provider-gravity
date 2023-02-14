@@ -46,6 +46,31 @@ func resourceDHCPScope() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"dns": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"add_zone_in_hostname": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+						"search": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"zone": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
 			"option": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -83,8 +108,10 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 		SubnetCidr: d.Get("subnet_cidr").(string),
 		Ttl:        int32(d.Get("lease_ttl").(int)),
 		Options:    []api.TypesDHCPOption{},
+		Dns:        &api.DhcpScopeDNS{},
 	}
 	m.Ipam = tfMap(d.Get("ipam").(map[string]interface{}))
+
 	options := d.Get("option").(*schema.Set)
 	for _, opt := range options.List() {
 		values := opt.(map[string]interface{})
@@ -106,8 +133,26 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 			}
 			aopt.Value64 = values
 		}
-		fmt.Printf("%+v\n", aopt)
 		m.Options = append(m.Options, aopt)
+	}
+
+	dns := d.Get("dns").(*schema.Set)
+	for _, opt := range dns.List() {
+		values := opt.(map[string]interface{})
+
+		if t, ok := values["add_zone_in_hostname"].(bool); ok {
+			m.Dns.AddZoneInHostname = api.PtrBool(t)
+		}
+		if t, ok := values["zone"].(string); ok && t != "" {
+			m.Dns.Zone = api.PtrString(t)
+		}
+		if t, ok := values["search"].([]interface{}); ok && len(t) > 0 {
+			values := make([]string, len(t))
+			for i, v := range t {
+				values[i] = v.(string)
+			}
+			m.Dns.Search = values
+		}
 	}
 	return &m, nil
 }
@@ -134,7 +179,6 @@ func flattenOptions(opts []api.TypesDHCPOption) *schema.Set {
 
 	for _, opt := range opts {
 		vopt := map[string]interface{}{}
-
 		vopt["tag"] = opt.Tag.Get()
 		vopt["tag_name"] = opt.TagName
 		vopt["value"] = opt.Value.Get()
@@ -144,31 +188,52 @@ func flattenOptions(opts []api.TypesDHCPOption) *schema.Set {
 		vopts = append(vopts, vopt)
 	}
 
-	return schema.NewSet(conditionsHash, vopts)
+	return schema.NewSet(func(i interface{}) int {
+		var buf bytes.Buffer
+		mCondition := i.(map[string]interface{})
+		if v, ok := mCondition["tag"].(int); ok {
+			buf.WriteString(fmt.Sprintf("%d-", v))
+		}
+		if v, ok := mCondition["tag_name"].(string); ok {
+			buf.WriteString(fmt.Sprintf("%s-", v))
+		}
+		if v, ok := mCondition["value"].(string); ok {
+			buf.WriteString(fmt.Sprintf("%s-", v))
+		}
+		if v, ok := mCondition["value64"].([]string); ok {
+			buf.WriteString(fmt.Sprintf("%s-", v))
+		}
+		return StringHashcode(buf.String())
+	}, vopts)
 }
 
-func conditionsHash(vCondition interface{}) int {
-	var buf bytes.Buffer
+func flattenDNS(dns *api.DhcpScopeDNS) *schema.Set {
+	var vdns []interface{}
 
-	mCondition := vCondition.(map[string]interface{})
-
-	if v, ok := mCondition["tag"].(int); ok {
-		buf.WriteString(fmt.Sprintf("%d-", v))
+	if dns != nil {
+		vopt := map[string]interface{}{}
+		vopt["add_zone_in_hostname"] = dns.AddZoneInHostname
+		vopt["zone"] = dns.Zone
+		if len(dns.Search) > 0 {
+			vopt["search"] = dns.Search
+		}
+		vdns = append(vdns, vopt)
 	}
 
-	if v, ok := mCondition["tag_name"].(string); ok {
-		buf.WriteString(fmt.Sprintf("%s-", v))
-	}
-
-	if v, ok := mCondition["value"].(string); ok {
-		buf.WriteString(fmt.Sprintf("%s-", v))
-	}
-
-	if v, ok := mCondition["value64"].([]string); ok {
-		buf.WriteString(fmt.Sprintf("%s-", v))
-	}
-
-	return StringHashcode(buf.String())
+	return schema.NewSet(func(i interface{}) int {
+		var buf bytes.Buffer
+		mCondition := i.(map[string]interface{})
+		if v, ok := mCondition["add_zone_in_hostname"].(bool); ok {
+			buf.WriteString(fmt.Sprintf("%t-", v))
+		}
+		if v, ok := mCondition["zone"].(string); ok {
+			buf.WriteString(fmt.Sprintf("%s-", v))
+		}
+		if v, ok := mCondition["search"].([]string); ok {
+			buf.WriteString(fmt.Sprintf("%s-", v))
+		}
+		return StringHashcode(buf.String())
+	}, vdns)
 }
 
 func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -190,6 +255,7 @@ func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m interf
 	setWrapper(d, "lease_ttl", res.Scopes[0].Ttl)
 	setWrapper(d, "ipam", res.Scopes[0].Ipam)
 	setWrapper(d, "option", flattenOptions(res.Scopes[0].Options))
+	setWrapper(d, "dns", flattenDNS(res.Scopes[0].Dns))
 	return diags
 }
 

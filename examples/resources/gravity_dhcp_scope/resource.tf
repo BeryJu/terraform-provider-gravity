@@ -34,4 +34,25 @@ resource "gravity_dhcp_scope" "name" {
     tag   = 43
     value = "10.10.10.2"
   }
+
+  # DNS Options
+  dns {
+    # When `zone` is also configured in gravity, DNS records are created automatically
+    zone                 = gravity_dns_zone.example.zone
+    add_zone_in_hostname = true
+  }
+}
+
+resource "gravity_dns_zone" "example" {
+  # Make sure zone ends with a trailing slash
+  zone          = "my-domain.com."
+  authoritative = true
+  handlers = [
+    {
+      type = "memory",
+    },
+    {
+      type = "etcd",
+    },
+  ]
 }
