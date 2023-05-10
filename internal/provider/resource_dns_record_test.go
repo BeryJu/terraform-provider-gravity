@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestAccResourceDNSRecord(t *testing.T) {
-	rName := strings.ToUpper(acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum))
+	rName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -18,11 +17,11 @@ func TestAccResourceDNSRecord(t *testing.T) {
 			{
 				Config: testAccResourceDNSRecordSimple(rName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("gravity_dns_zone.name", "name", strings.ToLower(fmt.Sprintf("%s.", rName))),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "name", fmt.Sprintf("%s.", rName)),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "authoritative", "true"),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handlers.#", "1"),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handlers.0.type", "etcd"),
-					resource.TestCheckResourceAttr("gravity_dns_record.record", "fqdn", strings.ToLower(fmt.Sprintf("foo.%s.", rName))),
+					resource.TestCheckResourceAttr("gravity_dns_record.record", "fqdn", fmt.Sprintf("foo.%s.", rName)),
 				),
 			},
 		},
