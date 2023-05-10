@@ -25,14 +25,16 @@ func resourceDNSRecord() *schema.Resource {
 			},
 
 			"zone": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateMustBeLowercase("DNS name must be lowercase"),
 			},
 			"hostname": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateMustBeLowercase("DNS name must be lowercase"),
 			},
 			"uid": {
 				Type:     schema.TypeString,

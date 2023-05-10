@@ -19,9 +19,10 @@ func resourceDNSZone() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateMustBeLowercase("DNS name must be lowercase"),
 			},
 			"authoritative": {
 				Type:     schema.TypeBool,

@@ -2,11 +2,14 @@ package provider
 
 import (
 	"bytes"
+	"fmt"
 	"hash/crc32"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -74,4 +77,20 @@ func StringHashcode(s string) int {
 	}
 	// v == MinInt
 	return 0
+}
+
+func validateMustBeLowercase(summary string) schema.SchemaValidateDiagFunc {
+	return func(v any, p cty.Path) diag.Diagnostics {
+		value := v.(string)
+		var diags diag.Diagnostics
+		if strings.ToLower(value) != value {
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  summary,
+				Detail:   fmt.Sprintf("%q is not lowercase", value),
+			}
+			diags = append(diags, diag)
+		}
+		return diags
+	}
 }
