@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"strings"
 
 	"beryju.io/gravity/api"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -54,7 +53,7 @@ func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	c := m.(*APIClient)
 
 	req := resourceDNSZoneSchemaToModel(d)
-	name := strings.ToLower(d.Get("name").(string))
+	name := d.Get("name").(string)
 
 	hr, err := c.client.RolesDnsApi.DnsPutZones(ctx).Zone(name).DnsAPIZonesPutInput(*req).Execute()
 	if err != nil {
@@ -77,7 +76,7 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 		d.SetId("")
 		return diag.Diagnostics{}
 	}
-	setWrapper(d, "name", strings.ToLower(res.Zones[0].Name))
+	setWrapper(d, "name", res.Zones[0].Name)
 	setWrapper(d, "authoritative", res.Zones[0].Authoritative)
 	setWrapper(d, "handlers", res.Zones[0].HandlerConfigs)
 	return diags

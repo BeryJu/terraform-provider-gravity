@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"beryju.io/gravity/api"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -94,8 +93,8 @@ func resourceDNSRecordSchemaToModel(d *schema.ResourceData) *api.DnsAPIRecordsPu
 }
 
 func resourceDNSRecordID(d *schema.ResourceData) string {
-	zone := strings.ToLower(d.Get("zone").(string))
-	hostname := strings.ToLower(d.Get("hostname").(string))
+	zone := d.Get("zone").(string)
+	hostname := d.Get("hostname").(string)
 	type_ := d.Get("type").(string)
 	uid := d.Get("uid").(string)
 	return fmt.Sprintf("%s:%s:%s:%s", zone, hostname, type_, uid)
@@ -105,8 +104,8 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	c := m.(*APIClient)
 
 	req := resourceDNSRecordSchemaToModel(d)
-	zone := strings.ToLower(d.Get("zone").(string))
-	hostname := strings.ToLower(d.Get("hostname").(string))
+	zone := d.Get("zone").(string)
+	hostname := d.Get("hostname").(string)
 	uid := d.Get("uid").(string)
 
 	hr, err := c.client.RolesDnsApi.DnsPutRecords(ctx).
@@ -125,8 +124,8 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
-	zone := strings.ToLower(d.Get("zone").(string))
-	hostname := strings.ToLower(d.Get("hostname").(string))
+	zone := d.Get("zone").(string)
+	hostname := d.Get("hostname").(string)
 
 	res, hr, err := c.client.RolesDnsApi.DnsGetRecords(ctx).
 		Zone(zone).
@@ -141,9 +140,9 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Diagnostics{}
 	}
 	d.SetId(resourceDNSRecordID(d))
-	setWrapper(d, "fqdn", strings.ToLower(res.Records[0].Fqdn))
+	setWrapper(d, "fqdn", res.Records[0].Fqdn)
 	setWrapper(d, "uid", res.Records[0].Uid)
-	setWrapper(d, "hostname", strings.ToLower(res.Records[0].Hostname))
+	setWrapper(d, "hostname", res.Records[0].Hostname)
 	setWrapper(d, "data", res.Records[0].Data)
 	setWrapper(d, "type", res.Records[0].Type)
 	setWrapper(d, "mx_preference", res.Records[0].MxPreference)
@@ -163,8 +162,8 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
-	zone := strings.ToLower(d.Get("zone").(string))
-	hostname := strings.ToLower(d.Get("hostname").(string))
+	zone := d.Get("zone").(string)
+	hostname := d.Get("hostname").(string)
 	uid := d.Get("uid").(string)
 	type_ := d.Get("type").(string)
 
