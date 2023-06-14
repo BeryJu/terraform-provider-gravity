@@ -112,5 +112,3 @@ Optional:
 - `tag_name` (String)
 - `value` (String)
 - `value64` (List of String)
-
-

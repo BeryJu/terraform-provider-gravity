@@ -66,5 +66,3 @@ resource "gravity_dns_zone" "forward" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-

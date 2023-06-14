@@ -60,5 +60,3 @@ resource "gravity_dhcp_lease" "record" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-
