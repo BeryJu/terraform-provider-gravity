@@ -58,5 +58,3 @@ resource "gravity_dns_record" "record" {
 
 - `fqdn` (String) Generated.
 - `id` (String) The ID of this resource.
-
-
