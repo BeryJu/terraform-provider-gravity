@@ -42,6 +42,8 @@ runs:
               ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
               LOG_LEVEL: "debug"
               INSTANCE_IP: "0.0.0.0"
+              SENTRY_ENABLED: "true"
+              SENTRY_ENVIRONMENT: "terraform-ci"
         EOT
 
     - name: Run
