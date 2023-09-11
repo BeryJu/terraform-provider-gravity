@@ -47,9 +47,9 @@ jobs:
       fail-fast: false
       matrix:
         terraform:
-          - '1.0.*'
-          - '1.1.*'
-          - '1.2.*'
+          - "beta"
+          - "rc"
+          - "latest"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
@@ -67,5 +67,12 @@ jobs:
           TF_ACC: "1"
           GRAVITY_URL: ${{ steps.gravity.outputs.http_url }}
           GRAVITY_TOKEN: ${{ steps.gravity.outputs.admin_token }}
-        run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
+        run: |
+          go test -timeout 0 -v -race -coverprofile=coverage.txt -covermode=atomic -cover ./internal/provider/
+      - name: gravity logs
+        if: ${{ always() }}
+        run: |
+          docker logs ${{ steps.gravity.outputs.server_container_id }}
+      - if: ${{ always() }}
+        uses: codecov/codecov-action@v3
