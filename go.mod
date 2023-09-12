@@ -3,7 +3,7 @@ module beryju.io/terraform-provider-gravity
 go 1.18
 
 require (
-	beryju.io/gravity v0.6.12
+	beryju.io/gravity v0.6.13
 	github.com/go-openapi/runtime v0.26.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/terraform-plugin-docs v0.16.0
