@@ -17,7 +17,7 @@ description: |-
 
 resource "gravity_dns_zone" "example" {
   # Make sure zone ends with a trailing slash
-  zone          = "my-domain.com."
+  name          = "my-domain.com."
   authoritative = true
   handlers = [
     {
@@ -33,7 +33,7 @@ resource "gravity_dns_zone" "example" {
 
 resource "gravity_dns_zone" "forward" {
   # Root zone, will be used for all queries that don't match other zones
-  zone = "."
+  name = "."
   handlers = [
     {
       type = "memory",
