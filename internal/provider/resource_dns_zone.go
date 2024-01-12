@@ -29,6 +29,11 @@ func resourceDNSZone() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+			"default_ttl": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  86400,
+			},
 			"handlers": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -47,6 +52,7 @@ func resourceDNSZoneSchemaToModel(d *schema.ResourceData) *api.DnsAPIZonesPutInp
 	m := api.DnsAPIZonesPutInput{}
 	m.Authoritative = d.Get("authoritative").(bool)
 	m.HandlerConfigs = tfListMap(d.Get("handlers").([]interface{}))
+	m.DefaultTTL = int32(d.Get("default_ttl").(int))
 	return &m
 }
 
@@ -80,6 +86,7 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	setWrapper(d, "name", res.Zones[0].Name)
 	setWrapper(d, "authoritative", res.Zones[0].Authoritative)
 	setWrapper(d, "handlers", res.Zones[0].HandlerConfigs)
+	setWrapper(d, "default_ttl", res.Zones[0].DefaultTTL)
 	return diags
 }
 

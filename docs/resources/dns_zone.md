@@ -62,6 +62,7 @@ resource "gravity_dns_zone" "forward" {
 ### Optional
 
 - `authoritative` (Boolean) Defaults to `false`.
+- `default_ttl` (Number) Defaults to `86400`.
 
 ### Read-Only
 

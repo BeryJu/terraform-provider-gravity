@@ -53,7 +53,7 @@ resource "gravity_dhcp_scope" "name" {
   # DNS Options
   dns {
     # When `zone` is also configured in gravity, DNS records are created automatically
-    zone                 = gravity_dns_zone.example.zone
+    zone                 = gravity_dns_zone.example.id
     add_zone_in_hostname = true
   }
 }
