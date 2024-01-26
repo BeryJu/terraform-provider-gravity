@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	beryju.io/gravity v0.8.1
-	github.com/go-openapi/runtime v0.27.0
+	github.com/go-openapi/runtime v0.27.1
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/terraform-plugin-docs v0.18.0
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
