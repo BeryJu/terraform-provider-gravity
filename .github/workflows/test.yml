@@ -75,4 +75,4 @@ jobs:
         run: |
           docker logs ${{ steps.gravity.outputs.server_container_id }}
       - if: ${{ always() }}
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
