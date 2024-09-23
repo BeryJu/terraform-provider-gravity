@@ -1,6 +1,7 @@
 module beryju.io/terraform-provider-gravity
 
-go 1.22.3
+go 1.23
+
 toolchain go1.23.1
 
 require (
