@@ -53,11 +53,11 @@ runs:
         set -x
         export COMPOSE_PROJECT_NAME=gravity
         wget https://raw.githubusercontent.com/BeryJu/gravity/main/docker-compose.yml
-        docker-compose pull -q
-        docker-compose up -d
+        docker compose pull -q
+        docker compose up -d
 
         function cleanup() {
-          docker-compose logs
+          docker compose logs
         }
         trap cleanup EXIT
 
