@@ -35,6 +35,11 @@ func resourceDHCPLease() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"reservation": {
+				Type:     schema.TypeBool,
+				Default:  true,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -43,6 +48,9 @@ func resourceDHCPLeaseSchemaToModel(d *schema.ResourceData) *api.DhcpAPILeasesPu
 	m := api.DhcpAPILeasesPutInput{
 		Address:  d.Get("address").(string),
 		Hostname: d.Get("hostname").(string),
+	}
+	if res := d.Get("reservation").(bool); res {
+		m.Expiry = api.PtrInt32(-1)
 	}
 	return &m
 }
@@ -89,6 +97,7 @@ func resourceDHCPLeaseRead(ctx context.Context, d *schema.ResourceData, m interf
 	setWrapper(d, "address", res.Leases[0].Address)
 	setWrapper(d, "hostname", res.Leases[0].Hostname)
 	setWrapper(d, "scope", res.Leases[0].ScopeKey)
+	setWrapper(d, "reservation", *res.Leases[0].Expiry <= -1)
 	return diags
 }
 

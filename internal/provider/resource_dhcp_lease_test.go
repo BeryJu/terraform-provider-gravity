@@ -21,6 +21,7 @@ func TestAccResourceDHCPLease(t *testing.T) {
 					resource.TestCheckResourceAttr("gravity_dhcp_scope.name", "subnet_cidr", "10.10.10.0/24"),
 					resource.TestCheckResourceAttr("gravity_dhcp_scope.name", "option.#", "2"),
 					resource.TestCheckResourceAttr("gravity_dhcp_lease.record", "identifier", rName),
+					resource.TestCheckResourceAttr("gravity_dhcp_lease.record", "reservation", "true"),
 				),
 			},
 		},

@@ -57,6 +57,10 @@ resource "gravity_dhcp_lease" "record" {
 - `identifier` (String)
 - `scope` (String)
 
+### Optional
+
+- `reservation` (Boolean) Defaults to `true`.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
