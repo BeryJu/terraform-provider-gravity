@@ -41,7 +41,7 @@ func resourceDNSZone() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: func(i interface{}, p cty.Path) diag.Diagnostics {
-					err := json.Unmarshal([]byte(i.(string)), &struct{}{})
+					err := json.Unmarshal([]byte(i.(string)), &[]struct{}{})
 					if err != nil {
 						return diag.FromErr(err)
 					}
