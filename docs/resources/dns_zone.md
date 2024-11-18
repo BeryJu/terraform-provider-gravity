@@ -56,7 +56,7 @@ resource "gravity_dns_zone" "forward" {
 
 ### Required
 
-- `handlers` (List of Map of String)
+- `handlers` (String)
 - `name` (String)
 
 ### Optional
