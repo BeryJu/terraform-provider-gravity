@@ -54,14 +54,6 @@ func tfMap(raw map[string]interface{}) map[string]string {
 	return x
 }
 
-func tfListMap(raw []interface{}) []map[string]string {
-	values := make([]map[string]string, len(raw))
-	for i, rh := range raw {
-		values[i] = tfMap(rh.(map[string]interface{}))
-	}
-	return values
-}
-
 // StringHashcode hashes a string to a unique hashcode.
 //
 // crc32 returns a uint32, but for our use we need

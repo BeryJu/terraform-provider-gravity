@@ -2,8 +2,11 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"beryju.io/gravity/api"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -35,31 +38,42 @@ func resourceDNSZone() *schema.Resource {
 				Default:  86400,
 			},
 			"handlers": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeString,
 				Required: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeMap,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
-					},
+				ValidateDiagFunc: func(i interface{}, p cty.Path) diag.Diagnostics {
+					err := json.Unmarshal([]byte(i.(string)), &[]struct{}{})
+					if err != nil {
+						return diag.FromErr(err)
+					}
+					return nil
 				},
 			},
 		},
 	}
 }
 
-func resourceDNSZoneSchemaToModel(d *schema.ResourceData) *api.DnsAPIZonesPutInput {
+func resourceDNSZoneSchemaToModel(d *schema.ResourceData) (*api.DnsAPIZonesPutInput, diag.Diagnostics) {
 	m := api.DnsAPIZonesPutInput{}
 	m.Authoritative = d.Get("authoritative").(bool)
-	m.HandlerConfigs = tfListMap(d.Get("handlers").([]interface{}))
 	m.DefaultTTL = int32(d.Get("default_ttl").(int))
-	return &m
+
+	var c []map[string]interface{}
+	err := json.NewDecoder(strings.NewReader(d.Get("handlers").(string))).Decode(&c)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+	m.HandlerConfigs = c
+
+	return &m, nil
 }
 
 func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
 
-	req := resourceDNSZoneSchemaToModel(d)
+	req, diags := resourceDNSZoneSchemaToModel(d)
+	if diags != nil {
+		return diags
+	}
 	name := d.Get("name").(string)
 
 	hr, err := c.client.RolesDnsApi.DnsPutZones(ctx).Zone(name).DnsAPIZonesPutInput(*req).Execute()
@@ -85,8 +99,12 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	setWrapper(d, "name", res.Zones[0].Name)
 	setWrapper(d, "authoritative", res.Zones[0].Authoritative)
-	setWrapper(d, "handlers", res.Zones[0].HandlerConfigs)
 	setWrapper(d, "default_ttl", res.Zones[0].DefaultTTL)
+	b, err := json.Marshal(res.Zones[0].HandlerConfigs)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	setWrapper(d, "handlers", string(b))
 	return diags
 }
 
