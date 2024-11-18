@@ -19,14 +19,14 @@ resource "gravity_dns_zone" "example" {
   # Make sure zone ends with a trailing slash
   name          = "my-domain.com."
   authoritative = true
-  handlers = [
+  handlers = jsonencode([
     {
       type = "memory",
     },
     {
       type = "etcd",
     },
-  ]
+  ])
 }
 
 # Forwarding zone
