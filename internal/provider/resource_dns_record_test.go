@@ -33,11 +33,11 @@ func testAccResourceDNSRecordSimple(name string) string {
 resource "gravity_dns_zone" "name" {
   name          = "%[1]s."
   authoritative = true
-  handlers      = [
+  handlers      = jsonencode([
     {
       type = "etcd",
     }
-  ]
+  ])
 }
 
 resource "gravity_dns_record" "record" {
