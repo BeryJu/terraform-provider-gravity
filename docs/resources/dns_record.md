@@ -17,7 +17,7 @@ resource "gravity_dns_zone" "example" {
   # Make sure zone ends with a trailing slash
   zone          = "my-domain.com."
   authoritative = true
-  handlers = jsonencode([
+  handler_configs = jsonencode([
     {
       type = "memory",
     },

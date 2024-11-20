@@ -19,7 +19,7 @@ func TestAccResourceDNSZone(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "name", fmt.Sprintf("%s.", rName)),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "authoritative", "true"),
-					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handlers", "[{\"type\":\"etcd\"}]"),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handler_configs", "[{\"to\":[\"1.1.1.1\"],\"type\":\"etcd\"}]"),
 				),
 			},
 		},
@@ -34,6 +34,7 @@ resource "gravity_dns_zone" "name" {
   handlers      = jsonencode([
     {
       type = "etcd",
+	  to = ["1.1.1.1"],
     }
   ])
 }

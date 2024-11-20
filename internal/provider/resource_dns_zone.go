@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/pkg/errors"
 )
 
 func resourceDNSZone() *schema.Resource {
@@ -38,12 +39,23 @@ func resourceDNSZone() *schema.Resource {
 				Default:  86400,
 			},
 			"handlers": {
+				Type: schema.TypeList,
+				Elem: &schema.Schema{
+					Type: schema.TypeMap,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
+				Required:    true,
+				Description: "Deprecated. Use `handler_configs` instead.",
+			},
+			"handler_configs": {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: func(i interface{}, p cty.Path) diag.Diagnostics {
 					err := json.Unmarshal([]byte(i.(string)), &[]struct{}{})
 					if err != nil {
-						return diag.FromErr(err)
+						return diag.FromErr(errors.Wrap(err, "Failed to validate handlers"))
 					}
 					return nil
 				},
@@ -58,9 +70,9 @@ func resourceDNSZoneSchemaToModel(d *schema.ResourceData) (*api.DnsAPIZonesPutIn
 	m.DefaultTTL = int32(d.Get("default_ttl").(int))
 
 	var c []map[string]interface{}
-	err := json.NewDecoder(strings.NewReader(d.Get("handlers").(string))).Decode(&c)
+	err := json.NewDecoder(strings.NewReader(d.Get("handler_configs").(string))).Decode(&c)
 	if err != nil {
-		return nil, diag.FromErr(err)
+		return nil, diag.FromErr(errors.Wrap(err, "failed to convert to json"))
 	}
 	m.HandlerConfigs = c
 
@@ -104,7 +116,7 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	setWrapper(d, "handlers", string(b))
+	setWrapper(d, "handler_configs", string(b))
 	return diags
 }
 
