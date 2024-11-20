@@ -19,7 +19,7 @@ func TestAccResourceDNSRecord(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "name", fmt.Sprintf("%s.", rName)),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "authoritative", "true"),
-					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handlers", "[{\"type\":\"etcd\"}]"),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handler_configs", "[{\"type\":\"etcd\"}]"),
 					resource.TestCheckResourceAttr("gravity_dns_record.record", "fqdn", fmt.Sprintf("foo.%s.", rName)),
 				),
 			},
@@ -30,9 +30,9 @@ func TestAccResourceDNSRecord(t *testing.T) {
 func testAccResourceDNSRecordSimple(name string) string {
 	return fmt.Sprintf(`
 resource "gravity_dns_zone" "name" {
-  name          = "%[1]s."
-  authoritative = true
-  handlers      = jsonencode([
+  name            = "%[1]s."
+  authoritative   = true
+  handler_configs = jsonencode([
     {
       type = "etcd",
     }

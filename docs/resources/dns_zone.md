@@ -19,7 +19,7 @@ resource "gravity_dns_zone" "example" {
   # Make sure zone ends with a trailing slash
   name          = "my-domain.com."
   authoritative = true
-  handlers = jsonencode([
+  handler_configs = jsonencode([
     {
       type = "memory",
     },
@@ -34,7 +34,7 @@ resource "gravity_dns_zone" "example" {
 resource "gravity_dns_zone" "forward" {
   # Root zone, will be used for all queries that don't match other zones
   name = "."
-  handlers = jsonencode([
+  handler_configs = jsonencode([
     {
       type = "memory",
     },
@@ -56,13 +56,14 @@ resource "gravity_dns_zone" "forward" {
 
 ### Required
 
-- `handlers` (String)
+- `handler_configs` (String)
 - `name` (String)
 
 ### Optional
 
 - `authoritative` (Boolean) Defaults to `false`.
 - `default_ttl` (Number) Defaults to `86400`.
+- `handlers` (List of Map of String) Deprecated. Use `handler_configs` instead.
 
 ### Read-Only
 
