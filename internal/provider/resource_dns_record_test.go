@@ -30,9 +30,9 @@ func TestAccResourceDNSRecord(t *testing.T) {
 func testAccResourceDNSRecordSimple(name string) string {
 	return fmt.Sprintf(`
 resource "gravity_dns_zone" "name" {
-  name          = "%[1]s."
-  authoritative = true
-  handlers      = jsonencode([
+  name            = "%[1]s."
+  authoritative   = true
+  handler_configs = jsonencode([
     {
       type = "etcd",
     }

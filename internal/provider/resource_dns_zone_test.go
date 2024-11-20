@@ -29,9 +29,9 @@ func TestAccResourceDNSZone(t *testing.T) {
 func testAccResourceDNSZoneSimple(name string) string {
 	return fmt.Sprintf(`
 resource "gravity_dns_zone" "name" {
-  name          = "%[1]s."
-  authoritative = true
-  handlers      = jsonencode([
+  name            = "%[1]s."
+  authoritative   = true
+  handler_configs = jsonencode([
     {
       type = "etcd",
 	  to = ["1.1.1.1"],
