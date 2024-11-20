@@ -46,7 +46,7 @@ func resourceDNSZone() *schema.Resource {
 						Type: schema.TypeString,
 					},
 				},
-				Required:    true,
+				Optional:    true,
 				Description: "Deprecated. Use `handler_configs` instead.",
 			},
 			"handler_configs": {

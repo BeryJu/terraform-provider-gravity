@@ -57,13 +57,13 @@ resource "gravity_dns_zone" "forward" {
 ### Required
 
 - `handler_configs` (String)
-- `handlers` (List of Map of String) Deprecated. Use `handler_configs` instead.
 - `name` (String)
 
 ### Optional
 
 - `authoritative` (Boolean) Defaults to `false`.
 - `default_ttl` (Number) Defaults to `86400`.
+- `handlers` (List of Map of String) Deprecated. Use `handler_configs` instead.
 
 ### Read-Only
 
