@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.1
 
 require (
-	beryju.io/gravity v0.17.1
+	beryju.io/gravity v0.18.0
 	github.com/go-openapi/runtime v0.28.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/terraform-plugin-docs v0.20.0
