@@ -48,6 +48,7 @@ func resourceDNSRecord() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 
 			"mx_preference": {
