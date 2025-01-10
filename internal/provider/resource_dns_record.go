@@ -129,10 +129,14 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	zone := d.Get("zone").(string)
 	hostname := d.Get("hostname").(string)
+	type_ := d.Get("type").(string)
+	uid := d.Get("uid").(string)
 
 	res, hr, err := c.client.RolesDnsApi.DnsGetRecords(ctx).
 		Zone(zone).
 		Hostname(hostname).
+		Type_(type_).
+		Uid(uid).
 		Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
