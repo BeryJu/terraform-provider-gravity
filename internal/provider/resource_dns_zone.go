@@ -38,17 +38,6 @@ func resourceDNSZone() *schema.Resource {
 				Optional: true,
 				Default:  86400,
 			},
-			"handlers": {
-				Type: schema.TypeList,
-				Elem: &schema.Schema{
-					Type: schema.TypeMap,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
-					},
-				},
-				Optional:    true,
-				Description: "Deprecated. Use `handler_configs` instead.",
-			},
 			"handler_configs": {
 				Type:     schema.TypeString,
 				Required: true,
