@@ -63,6 +63,7 @@ func Provider(version string, testing bool) *schema.Provider {
 			"gravity_dhcp_scope": resourceDHCPScope(),
 			"gravity_dns_record": resourceDNSRecord(),
 			"gravity_dns_zone":   resourceDNSZone(),
+			"gravity_user":       resourceUser(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure(version, testing),
