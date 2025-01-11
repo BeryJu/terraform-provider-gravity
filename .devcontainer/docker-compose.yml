@@ -1,0 +1,38 @@
+---
+version: "3.4"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+
+    volumes:
+      - ../..:/workspaces:cached
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  gravity:
+    image: ghcr.io/beryju/gravity:latest
+    restart: unless-stopped
+    user: root
+    environment:
+      LISTEN_ONLY: "true"
+      LOG_LEVEL: "debug"
+      INSTANCE_IP: "0.0.0.0"
+    volumes:
+      - data:/data
+    env_file:
+      - .env
+    ports:
+      - 8008:8008
+      - 8009:8009
+      - 8010:8010
+
+volumes:
+  data:
+    driver: local

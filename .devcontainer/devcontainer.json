@@ -1,0 +1,25 @@
+{
+	"name": "Gravity Terraform Provider",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"features": {
+		"ghcr.io/devcontainers/features/terraform:1": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go"
+			],
+			"settings": {
+				"go.testEnvVars": {
+					"TF_LOG": "trace",
+					"TF_ACC": "1",
+					"GRAVITY_URL": "http://gravity:8008",
+					"GRAVITY_TOKEN": "test"
+				},
+				"go.testFlags": ["-count=1"]
+			}
+		}
+	}
+}
