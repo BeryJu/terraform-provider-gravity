@@ -58,6 +58,7 @@ resource "gravity_dhcp_lease" "record" {
   hostname = "foo"
   address = "10.10.10.25"
   identifier = "%[1]s"
+  description = "foo"
 }
 `, name)
 }
