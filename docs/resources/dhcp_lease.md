@@ -59,6 +59,7 @@ resource "gravity_dhcp_lease" "record" {
 
 ### Optional
 
+- `description` (String)
 - `reservation` (Boolean) Defaults to `true`.
 
 ### Read-Only
