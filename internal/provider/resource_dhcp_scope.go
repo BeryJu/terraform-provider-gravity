@@ -166,7 +166,7 @@ func resourceDHCPScopeCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	name := d.Get("name").(string)
 
-	hr, err := c.client.RolesDhcpApi.DhcpPutScopes(ctx).Scope(name).DhcpAPIScopesPutInput(*req).Execute()
+	hr, err := c.client.RolesDhcpAPI.DhcpPutScopes(ctx).Scope(name).DhcpAPIScopesPutInput(*req).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
@@ -240,7 +240,7 @@ func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
-	res, hr, err := c.client.RolesDhcpApi.DhcpGetScopes(ctx).Name(d.Id()).Execute()
+	res, hr, err := c.client.RolesDhcpAPI.DhcpGetScopes(ctx).Name(d.Id()).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
@@ -269,7 +269,7 @@ func resourceDHCPScopeUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceDHCPScopeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
-	hr, err := c.client.RolesDhcpApi.DhcpDeleteScopes(ctx).Scope(d.Id()).Execute()
+	hr, err := c.client.RolesDhcpAPI.DhcpDeleteScopes(ctx).Scope(d.Id()).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}

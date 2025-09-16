@@ -111,7 +111,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	hostname := d.Get("hostname").(string)
 	uid := d.Get("uid").(string)
 
-	hr, err := c.client.RolesDnsApi.DnsPutRecords(ctx).
+	hr, err := c.client.RolesDnsAPI.DnsPutRecords(ctx).
 		Zone(zone).
 		Hostname(hostname).
 		Uid(uid).
@@ -132,7 +132,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	type_ := d.Get("type").(string)
 	uid := d.Get("uid").(string)
 
-	res, hr, err := c.client.RolesDnsApi.DnsGetRecords(ctx).
+	res, hr, err := c.client.RolesDnsAPI.DnsGetRecords(ctx).
 		Zone(zone).
 		Hostname(hostname).
 		Type_(type_).
@@ -174,7 +174,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	uid := d.Get("uid").(string)
 	type_ := d.Get("type").(string)
 
-	hr, err := c.client.RolesDnsApi.DnsDeleteRecords(ctx).
+	hr, err := c.client.RolesDnsAPI.DnsDeleteRecords(ctx).
 		Zone(zone).
 		Hostname(hostname).
 		Uid(uid).

@@ -65,7 +65,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	username := d.Get("username").(string)
 
-	hr, err := c.client.RolesApiApi.ApiPutUsers(ctx).Username(username).AuthAPIUsersPutInput(*req).Execute()
+	hr, err := c.client.RolesApiAPI.ApiPutUsers(ctx).Username(username).AuthAPIUsersPutInput(*req).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
@@ -77,7 +77,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
-	res, hr, err := c.client.RolesApiApi.ApiGetUsers(ctx).Username(d.Id()).Execute()
+	res, hr, err := c.client.RolesApiAPI.ApiGetUsers(ctx).Username(d.Id()).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
@@ -105,7 +105,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, m interface
 
 func resourceUserDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
-	hr, err := c.client.RolesApiApi.ApiDeleteUsers(ctx).Username(d.Id()).Execute()
+	hr, err := c.client.RolesApiAPI.ApiDeleteUsers(ctx).Username(d.Id()).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
