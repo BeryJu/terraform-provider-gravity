@@ -69,7 +69,7 @@ func resourceDHCPLeaseCreate(ctx context.Context, d *schema.ResourceData, m inte
 	scope := d.Get("scope").(string)
 	identifier := d.Get("identifier").(string)
 
-	hr, err := c.client.RolesDhcpApi.DhcpPutLeases(ctx).
+	hr, err := c.client.RolesDhcpAPI.DhcpPutLeases(ctx).
 		Scope(scope).
 		Identifier(identifier).
 		DhcpAPILeasesPutInput(*req).Execute()
@@ -87,7 +87,7 @@ func resourceDHCPLeaseRead(ctx context.Context, d *schema.ResourceData, m interf
 	scope := d.Get("scope").(string)
 	identifier := d.Get("identifier").(string)
 
-	res, hr, err := c.client.RolesDhcpApi.DhcpGetLeases(ctx).
+	res, hr, err := c.client.RolesDhcpAPI.DhcpGetLeases(ctx).
 		Scope(scope).
 		Identifier(identifier).
 		Execute()
@@ -122,7 +122,7 @@ func resourceDHCPLeaseDelete(ctx context.Context, d *schema.ResourceData, m inte
 	scope := d.Get("scope").(string)
 	identifier := d.Get("identifier").(string)
 
-	hr, err := c.client.RolesDhcpApi.DhcpDeleteLeases(ctx).
+	hr, err := c.client.RolesDhcpAPI.DhcpDeleteLeases(ctx).
 		Scope(scope).
 		Identifier(identifier).
 		Execute()

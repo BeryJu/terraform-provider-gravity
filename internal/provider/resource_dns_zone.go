@@ -77,7 +77,7 @@ func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	name := d.Get("name").(string)
 
-	hr, err := c.client.RolesDnsApi.DnsPutZones(ctx).Zone(name).DnsAPIZonesPutInput(*req).Execute()
+	hr, err := c.client.RolesDnsAPI.DnsPutZones(ctx).Zone(name).DnsAPIZonesPutInput(*req).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
@@ -89,7 +89,7 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
-	res, hr, err := c.client.RolesDnsApi.DnsGetZones(ctx).Name(d.Id()).Execute()
+	res, hr, err := c.client.RolesDnsAPI.DnsGetZones(ctx).Name(d.Id()).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
@@ -119,7 +119,7 @@ func resourceDNSZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourceDNSZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*APIClient)
-	hr, err := c.client.RolesDnsApi.DnsDeleteZones(ctx).Zone(d.Id()).Execute()
+	hr, err := c.client.RolesDnsAPI.DnsDeleteZones(ctx).Zone(d.Id()).Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)
 	}
