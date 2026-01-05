@@ -106,7 +106,7 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 	m := api.DhcpAPIScopesPutInput{
 		Default:    d.Get("default").(bool),
 		SubnetCidr: d.Get("subnet_cidr").(string),
-		Ttl:        int32(d.Get("lease_ttl").(int)),
+		Ttl:        int64(d.Get("lease_ttl").(int)),
 		Options:    []api.TypesDHCPOption{},
 		Dns:        &api.DhcpScopeDNS{},
 	}

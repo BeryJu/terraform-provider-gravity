@@ -54,7 +54,7 @@ func resourceDHCPLeaseSchemaToModel(d *schema.ResourceData) *api.DhcpAPILeasesPu
 		Hostname: d.Get("hostname").(string),
 	}
 	if res := d.Get("reservation").(bool); res {
-		m.Expiry = api.PtrInt32(-1)
+		m.Expiry = api.PtrInt64(-1)
 	}
 	if d, dok := d.GetOk("description"); dok {
 		m.Description = api.PtrString(d.(string))
