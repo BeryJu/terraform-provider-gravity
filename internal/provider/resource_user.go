@@ -31,7 +31,7 @@ func resourceUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "[]",
-				ValidateDiagFunc: func(i interface{}, p cty.Path) diag.Diagnostics {
+				ValidateDiagFunc: func(i any, p cty.Path) diag.Diagnostics {
 					err := json.Unmarshal([]byte(i.(string)), &[]struct{}{})
 					if err != nil {
 						return diag.FromErr(errors.Wrap(err, "Failed to validate handlers"))
@@ -46,7 +46,7 @@ func resourceUser() *schema.Resource {
 func resourceUserSchemaToModel(d *schema.ResourceData) (*api.AuthAPIUsersPutInput, diag.Diagnostics) {
 	m := api.AuthAPIUsersPutInput{}
 
-	var c []api.AuthPermission
+	var c []api.TypesPermission
 	err := json.NewDecoder(strings.NewReader(d.Get("permissions").(string))).Decode(&c)
 	if err != nil {
 		return nil, diag.FromErr(errors.Wrap(err, "failed to convert to json"))
@@ -56,7 +56,7 @@ func resourceUserSchemaToModel(d *schema.ResourceData) (*api.AuthAPIUsersPutInpu
 	return &m, nil
 }
 
-func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 
 	req, diags := resourceUserSchemaToModel(d)
@@ -73,7 +73,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m interface
 	return resourceUserRead(ctx, d, m)
 }
 
-func resourceUserRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceUserRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
@@ -95,7 +95,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	return diags
 }
 
-func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	diag := resourceUserCreate(ctx, d, m)
 	if diag != nil {
 		return diag
@@ -103,7 +103,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	return resourceUserRead(ctx, d, m)
 }
 
-func resourceUserDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceUserDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 	hr, err := c.client.RolesApiAPI.ApiDeleteUsers(ctx).Username(d.Id()).Execute()
 	if err != nil {

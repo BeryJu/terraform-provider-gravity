@@ -12,16 +12,34 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func setWrapper(d *schema.ResourceData, key string, data interface{}) {
+func StringInEnum[T ~string](items []T) schema.SchemaValidateDiagFunc {
+	nv := make([]string, len(items))
+	for i, v := range items {
+		nv[i] = string(v)
+	}
+	return validation.ToDiagFunc(validation.StringInSlice(nv, false))
+}
+
+func EnumToDescription[T ~string](allowed []T) string {
+	sb := &strings.Builder{}
+	sb.WriteString("Allowed values:\n")
+	for _, v := range allowed {
+		fmt.Fprintf(sb, "  - `%s`\n", v)
+	}
+	return sb.String()
+}
+
+func setWrapper(d *schema.ResourceData, key string, data any) {
 	err := d.Set(key, data)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func sliceToString(in []interface{}) []string {
+func sliceToString(in []any) []string {
 	sl := make([]string, len(in))
 	for i, m := range in {
 		sl[i] = m.(string)
@@ -46,7 +64,7 @@ func httpToDiag(d *schema.ResourceData, r *http.Response, err error) diag.Diagno
 	return diag.Errorf("HTTP Error '%s' during request '%s %s': \"%s\"", err.Error(), r.Request.Method, r.Request.URL.Path, buff.String())
 }
 
-func tfMap(raw map[string]interface{}) map[string]string {
+func tfMap(raw map[string]any) map[string]string {
 	x := make(map[string]string)
 	for k, v := range raw {
 		x[k] = v.(string)

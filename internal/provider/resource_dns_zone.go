@@ -41,7 +41,7 @@ func resourceDNSZone() *schema.Resource {
 			"handler_configs": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: func(i interface{}, p cty.Path) diag.Diagnostics {
+				ValidateDiagFunc: func(i any, p cty.Path) diag.Diagnostics {
 					err := json.Unmarshal([]byte(i.(string)), &[]struct{}{})
 					if err != nil {
 						return diag.FromErr(errors.Wrap(err, "Failed to validate handlers"))
@@ -58,7 +58,7 @@ func resourceDNSZoneSchemaToModel(d *schema.ResourceData) (*api.DnsAPIZonesPutIn
 	m.Authoritative = d.Get("authoritative").(bool)
 	m.DefaultTTL = int32(d.Get("default_ttl").(int))
 
-	var c []map[string]interface{}
+	var c []map[string]any
 	err := json.NewDecoder(strings.NewReader(d.Get("handler_configs").(string))).Decode(&c)
 	if err != nil {
 		return nil, diag.FromErr(errors.Wrap(err, "failed to convert to json"))
@@ -68,7 +68,7 @@ func resourceDNSZoneSchemaToModel(d *schema.ResourceData) (*api.DnsAPIZonesPutIn
 	return &m, nil
 }
 
-func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 
 	req, diags := resourceDNSZoneSchemaToModel(d)
@@ -85,7 +85,7 @@ func resourceDNSZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourceDNSZoneRead(ctx, d, m)
 }
 
-func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
@@ -109,7 +109,7 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return diags
 }
 
-func resourceDNSZoneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSZoneUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	diag := resourceDNSZoneCreate(ctx, d, m)
 	if diag != nil {
 		return diag
@@ -117,7 +117,7 @@ func resourceDNSZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourceDNSZoneRead(ctx, d, m)
 }
 
-func resourceDNSZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSZoneDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 	hr, err := c.client.RolesDnsAPI.DnsDeleteZones(ctx).Zone(d.Id()).Execute()
 	if err != nil {
