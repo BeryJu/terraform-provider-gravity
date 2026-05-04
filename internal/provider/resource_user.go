@@ -31,7 +31,7 @@ func resourceUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "[]",
-				ValidateDiagFunc: func(i interface{}, p cty.Path) diag.Diagnostics {
+				ValidateDiagFunc: func(i any, p cty.Path) diag.Diagnostics {
 					err := json.Unmarshal([]byte(i.(string)), &[]struct{}{})
 					if err != nil {
 						return diag.FromErr(errors.Wrap(err, "Failed to validate handlers"))
@@ -56,7 +56,7 @@ func resourceUserSchemaToModel(d *schema.ResourceData) (*api.AuthAPIUsersPutInpu
 	return &m, nil
 }
 
-func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 
 	req, diags := resourceUserSchemaToModel(d)
