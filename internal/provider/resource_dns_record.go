@@ -80,19 +80,19 @@ func resourceDNSRecordSchemaToModel(d *schema.ResourceData) *api.DnsAPIRecordsPu
 	}
 	if v, ok := d.GetOk("mx_preference"); ok {
 		va := v.(int)
-		m.MxPreference = api.PtrInt32(int32(va))
+		m.MxPreference = new(int32(va))
 	}
 	if v, ok := d.GetOk("srv_port"); ok {
 		va := v.(int)
-		m.SrvPort = api.PtrInt32(int32(va))
+		m.SrvPort = new(int32(va))
 	}
 	if v, ok := d.GetOk("srv_priority"); ok {
 		va := v.(int)
-		m.SrvPriority = api.PtrInt32(int32(va))
+		m.SrvPriority = new(int32(va))
 	}
 	if v, ok := d.GetOk("srv_weight"); ok {
 		va := v.(int)
-		m.SrvWeight = api.PtrInt32(int32(va))
+		m.SrvWeight = new(int32(va))
 	}
 	return &m
 }
@@ -105,7 +105,7 @@ func resourceDNSRecordID(d *schema.ResourceData) string {
 	return fmt.Sprintf("%s:%s:%s:%s", zone, hostname, type_, uid)
 }
 
-func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 
 	req := resourceDNSRecordSchemaToModel(d)
@@ -125,7 +125,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDNSRecordRead(ctx, d, m)
 }
 
-func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
@@ -161,7 +161,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	diag := resourceDNSRecordCreate(ctx, d, m)
 	if diag != nil {
 		return diag
@@ -169,7 +169,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDNSRecordRead(ctx, d, m)
 }
 
-func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 	zone := d.Get("zone").(string)
 	hostname := d.Get("hostname").(string)

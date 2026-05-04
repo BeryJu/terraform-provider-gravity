@@ -57,12 +57,12 @@ func resourceDHCPLeaseSchemaToModel(d *schema.ResourceData) *api.DhcpAPILeasesPu
 		m.Expiry = api.PtrInt64(-1)
 	}
 	if d, dok := d.GetOk("description"); dok {
-		m.Description = api.PtrString(d.(string))
+		m.Description = new(d.(string))
 	}
 	return &m
 }
 
-func resourceDHCPLeaseCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPLeaseCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 
 	req := resourceDHCPLeaseSchemaToModel(d)
@@ -80,7 +80,7 @@ func resourceDHCPLeaseCreate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDHCPLeaseRead(ctx, d, m)
 }
 
-func resourceDHCPLeaseRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPLeaseRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
@@ -109,7 +109,7 @@ func resourceDHCPLeaseRead(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func resourceDHCPLeaseUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPLeaseUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	diag := resourceDHCPLeaseCreate(ctx, d, m)
 	if diag != nil {
 		return diag
@@ -117,7 +117,7 @@ func resourceDHCPLeaseUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDHCPLeaseRead(ctx, d, m)
 }
 
-func resourceDHCPLeaseDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPLeaseDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 	scope := d.Get("scope").(string)
 	identifier := d.Get("identifier").(string)

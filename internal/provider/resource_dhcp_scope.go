@@ -110,23 +110,23 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 		Options:    []api.TypesDHCPOption{},
 		Dns:        &api.DhcpScopeDNS{},
 	}
-	m.Ipam = tfMap(d.Get("ipam").(map[string]interface{}))
+	m.Ipam = tfMap(d.Get("ipam").(map[string]any))
 
 	options := d.Get("option").(*schema.Set)
 	for _, opt := range options.List() {
-		values := opt.(map[string]interface{})
+		values := opt.(map[string]any)
 		aopt := api.TypesDHCPOption{}
 
 		if t, ok := values["tag"].(int); ok && t > 0 {
-			aopt.Tag.Set(api.PtrInt32(int32(t)))
+			aopt.Tag.Set(new(int32(t)))
 		}
 		if t, ok := values["tag_name"].(string); ok && t != "" {
-			aopt.TagName = api.PtrString(t)
+			aopt.TagName = new(t)
 		}
 		if t, ok := values["value"].(string); ok && t != "" {
-			aopt.Value.Set(api.PtrString(t))
+			aopt.Value.Set(new(t))
 		}
-		if t, ok := values["value64"].([]interface{}); ok && len(t) > 0 {
+		if t, ok := values["value64"].([]any); ok && len(t) > 0 {
 			values := make([]string, len(t))
 			for i, v := range t {
 				values[i] = v.(string)
@@ -138,15 +138,15 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 
 	dns := d.Get("dns").(*schema.Set)
 	for _, opt := range dns.List() {
-		values := opt.(map[string]interface{})
+		values := opt.(map[string]any)
 
 		if t, ok := values["add_zone_in_hostname"].(bool); ok {
-			m.Dns.AddZoneInHostname = api.PtrBool(t)
+			m.Dns.AddZoneInHostname = new(t)
 		}
 		if t, ok := values["zone"].(string); ok && t != "" {
-			m.Dns.Zone = api.PtrString(t)
+			m.Dns.Zone = new(t)
 		}
-		if t, ok := values["search"].([]interface{}); ok && len(t) > 0 {
+		if t, ok := values["search"].([]any); ok && len(t) > 0 {
 			values := make([]string, len(t))
 			for i, v := range t {
 				values[i] = v.(string)
@@ -157,7 +157,7 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 	return &m, nil
 }
 
-func resourceDHCPScopeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPScopeCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 
 	req, err := resourceDHCPScopeSchemaToModel(d)
@@ -175,10 +175,10 @@ func resourceDHCPScopeCreate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func flattenOptions(opts []api.TypesDHCPOption) *schema.Set {
-	var vopts []interface{}
+	var vopts []any
 
 	for _, opt := range opts {
-		vopt := map[string]interface{}{}
+		vopt := map[string]any{}
 		vopt["tag"] = opt.Tag.Get()
 		vopt["tag_name"] = opt.TagName
 		vopt["value"] = opt.Value.Get()
@@ -188,9 +188,9 @@ func flattenOptions(opts []api.TypesDHCPOption) *schema.Set {
 		vopts = append(vopts, vopt)
 	}
 
-	return schema.NewSet(func(i interface{}) int {
+	return schema.NewSet(func(i any) int {
 		buf := &bytes.Buffer{}
-		mCondition := i.(map[string]interface{})
+		mCondition := i.(map[string]any)
 		if v, ok := mCondition["tag"].(int); ok {
 			fmt.Fprintf(buf, "%d-", v)
 		}
@@ -208,10 +208,10 @@ func flattenOptions(opts []api.TypesDHCPOption) *schema.Set {
 }
 
 func flattenDNS(dns *api.DhcpScopeDNS) *schema.Set {
-	var vdns []interface{}
+	var vdns []any
 
 	if dns != nil {
-		vopt := map[string]interface{}{}
+		vopt := map[string]any{}
 		vopt["add_zone_in_hostname"] = dns.AddZoneInHostname
 		vopt["zone"] = dns.Zone
 		if len(dns.Search) > 0 {
@@ -220,9 +220,9 @@ func flattenDNS(dns *api.DhcpScopeDNS) *schema.Set {
 		vdns = append(vdns, vopt)
 	}
 
-	return schema.NewSet(func(i interface{}) int {
+	return schema.NewSet(func(i any) int {
 		buf := &bytes.Buffer{}
-		mCondition := i.(map[string]interface{})
+		mCondition := i.(map[string]any)
 		if v, ok := mCondition["add_zone_in_hostname"].(bool); ok {
 			fmt.Fprintf(buf, "%t-", v)
 		}
@@ -236,7 +236,7 @@ func flattenDNS(dns *api.DhcpScopeDNS) *schema.Set {
 	}, vdns)
 }
 
-func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*APIClient)
 
@@ -259,7 +259,7 @@ func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func resourceDHCPScopeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPScopeUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	diag := resourceDHCPScopeCreate(ctx, d, m)
 	if diag != nil {
 		return diag
@@ -267,7 +267,7 @@ func resourceDHCPScopeUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDHCPScopeRead(ctx, d, m)
 }
 
-func resourceDHCPScopeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDHCPScopeDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*APIClient)
 	hr, err := c.client.RolesDhcpAPI.DhcpDeleteScopes(ctx).Scope(d.Id()).Execute()
 	if err != nil {
