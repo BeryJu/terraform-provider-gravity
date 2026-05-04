@@ -28,7 +28,7 @@ func testAccResourceUserSimple(name string) string {
 	return fmt.Sprintf(`
 resource "gravity_user" "test" {
   username = "%[1]s"
-  permissions = jsonencode([])
+  permissions = "null"
 }
 `, name)
 }
