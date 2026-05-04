@@ -189,19 +189,19 @@ func flattenOptions(opts []api.TypesDHCPOption) *schema.Set {
 	}
 
 	return schema.NewSet(func(i interface{}) int {
-		var buf bytes.Buffer
+		buf := &bytes.Buffer{}
 		mCondition := i.(map[string]interface{})
 		if v, ok := mCondition["tag"].(int); ok {
-			buf.WriteString(fmt.Sprintf("%d-", v))
+			fmt.Fprintf(buf, "%d-", v)
 		}
 		if v, ok := mCondition["tag_name"].(string); ok {
-			buf.WriteString(fmt.Sprintf("%s-", v))
+			fmt.Fprintf(buf, "%s-", v)
 		}
 		if v, ok := mCondition["value"].(string); ok {
-			buf.WriteString(fmt.Sprintf("%s-", v))
+			fmt.Fprintf(buf, "%s-", v)
 		}
 		if v, ok := mCondition["value64"].([]string); ok {
-			buf.WriteString(fmt.Sprintf("%s-", v))
+			fmt.Fprintf(buf, "%s-", v)
 		}
 		return StringHashcode(buf.String())
 	}, vopts)
@@ -221,16 +221,16 @@ func flattenDNS(dns *api.DhcpScopeDNS) *schema.Set {
 	}
 
 	return schema.NewSet(func(i interface{}) int {
-		var buf bytes.Buffer
+		buf := &bytes.Buffer{}
 		mCondition := i.(map[string]interface{})
 		if v, ok := mCondition["add_zone_in_hostname"].(bool); ok {
-			buf.WriteString(fmt.Sprintf("%t-", v))
+			fmt.Fprintf(buf, "%t-", v)
 		}
 		if v, ok := mCondition["zone"].(string); ok {
-			buf.WriteString(fmt.Sprintf("%s-", v))
+			fmt.Fprintf(buf, "%s-", v)
 		}
 		if v, ok := mCondition["search"].([]string); ok {
-			buf.WriteString(fmt.Sprintf("%s-", v))
+			fmt.Fprintf(buf, "%s-", v)
 		}
 		return StringHashcode(buf.String())
 	}, vdns)

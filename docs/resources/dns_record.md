@@ -43,7 +43,15 @@ resource "gravity_dns_record" "record" {
 
 - `data` (String)
 - `hostname` (String)
-- `type` (String)
+- `type` (String) Allowed values:
+  - `A`
+  - `AAAA`
+  - `PTR`
+  - `SRV`
+  - `MX`
+  - `CNAME`
+  - `TXT`
+  - `SOA`
 - `uid` (String)
 - `zone` (String)
 

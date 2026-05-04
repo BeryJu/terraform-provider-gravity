@@ -46,9 +46,11 @@ func resourceDNSRecord() *schema.Resource {
 				Required: true,
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				Description:      EnumToDescription(api.AllowedTypesDNSRecordTypeEnumValues),
+				ValidateDiagFunc: StringInEnum(api.AllowedTypesDNSRecordTypeEnumValues),
 			},
 
 			"mx_preference": {
@@ -74,7 +76,7 @@ func resourceDNSRecord() *schema.Resource {
 func resourceDNSRecordSchemaToModel(d *schema.ResourceData) *api.DnsAPIRecordsPutInput {
 	m := api.DnsAPIRecordsPutInput{
 		Data: d.Get("data").(string),
-		Type: d.Get("type").(string),
+		Type: api.TypesDNSRecordType(d.Get("type").(string)),
 	}
 	if v, ok := d.GetOk("mx_preference"); ok {
 		va := v.(int)
@@ -178,7 +180,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 		Zone(zone).
 		Hostname(hostname).
 		Uid(uid).
-		Type_(type_).
+		Type_(api.TypesDNSRecordType(type_)).
 		Execute()
 	if err != nil {
 		return httpToDiag(d, hr, err)

@@ -46,7 +46,7 @@ func resourceUser() *schema.Resource {
 func resourceUserSchemaToModel(d *schema.ResourceData) (*api.AuthAPIUsersPutInput, diag.Diagnostics) {
 	m := api.AuthAPIUsersPutInput{}
 
-	var c []api.AuthPermission
+	var c []api.TypesPermission
 	err := json.NewDecoder(strings.NewReader(d.Get("permissions").(string))).Decode(&c)
 	if err != nil {
 		return nil, diag.FromErr(errors.Wrap(err, "failed to convert to json"))
