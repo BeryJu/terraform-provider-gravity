@@ -1,5 +1,5 @@
-beryju.io/gravity v0.32.2 h1:pIif/2jAgfgo0YVJlYdLXGzRIkXiGfZMjI6LGFTzJxs=
-beryju.io/gravity v0.32.2/go.mod h1:y//cTswOxi/LxrTEAJ1vmO8FcpU3AKS02ik4NPd5gQg=
+beryju.io/gravity v0.33.0 h1:oi0uMTOeTwny47dyGLe8SPd+QCMiIlEGWC4buIDgnA4=
+beryju.io/gravity v0.33.0/go.mod h1:mb5EsVWCboVL87jptlMNqA7VGqabbzrmGvkoRh+duIQ=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
