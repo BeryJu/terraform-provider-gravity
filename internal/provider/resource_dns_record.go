@@ -50,6 +50,11 @@ func resourceDNSRecord() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"ttl": {
+				Type:     schema.TypeInt,
+				Required: true,
+				Default:  0,
+			},
 
 			"mx_preference": {
 				Type:     schema.TypeInt,
@@ -74,7 +79,8 @@ func resourceDNSRecord() *schema.Resource {
 func resourceDNSRecordSchemaToModel(d *schema.ResourceData) *api.DnsAPIRecordsPutInput {
 	m := api.DnsAPIRecordsPutInput{
 		Data: d.Get("data").(string),
-		Type: d.Get("type").(string),
+		Type: api.TypesDNSRecordType(d.Get("type").(string)),
+		Ttl:  int64(d.Get("ttl").(int)),
 	}
 	if v, ok := d.GetOk("mx_preference"); ok {
 		va := v.(int)
@@ -172,7 +178,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	zone := d.Get("zone").(string)
 	hostname := d.Get("hostname").(string)
 	uid := d.Get("uid").(string)
-	type_ := d.Get("type").(string)
+	type_ := api.TypesDNSRecordType(d.Get("type").(string))
 
 	hr, err := c.client.RolesDnsAPI.DnsDeleteRecords(ctx).
 		Zone(zone).

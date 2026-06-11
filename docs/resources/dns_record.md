@@ -43,6 +43,7 @@ resource "gravity_dns_record" "record" {
 
 - `data` (String)
 - `hostname` (String)
+- `ttl` (Number) Defaults to `0`.
 - `type` (String)
 - `uid` (String)
 - `zone` (String)
