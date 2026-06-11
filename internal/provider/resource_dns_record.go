@@ -46,9 +46,11 @@ func resourceDNSRecord() *schema.Resource {
 				Required: true,
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				Description:      EnumToDescription(api.AllowedTypesDNSRecordTypeEnumValues),
+				ValidateDiagFunc: StringInEnum(api.AllowedTypesDNSRecordTypeEnumValues),
 			},
 			"ttl": {
 				Type:     schema.TypeInt,

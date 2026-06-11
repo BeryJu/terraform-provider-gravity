@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func setWrapper(d *schema.ResourceData, key string, data interface{}) {
@@ -19,6 +20,23 @@ func setWrapper(d *schema.ResourceData, key string, data interface{}) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func StringInEnum[T ~string](items []T) schema.SchemaValidateDiagFunc {
+	nv := make([]string, len(items))
+	for i, v := range items {
+		nv[i] = string(v)
+	}
+	return validation.ToDiagFunc(validation.StringInSlice(nv, false))
+}
+
+func EnumToDescription[T ~string](allowed []T) string {
+	sb := &strings.Builder{}
+	sb.WriteString("Allowed values:\n")
+	for _, v := range allowed {
+		fmt.Fprintf(sb, "  - `%s`\n", v)
+	}
+	return sb.String()
 }
 
 func sliceToString(in []interface{}) []string {
