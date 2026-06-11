@@ -43,7 +43,6 @@ resource "gravity_dns_record" "record" {
 
 - `data` (String)
 - `hostname` (String)
-- `ttl` (Number) Defaults to `0`.
 - `type` (String) Allowed values:
   - `A`
   - `AAAA`
@@ -62,6 +61,7 @@ resource "gravity_dns_record" "record" {
 - `srv_port` (Number)
 - `srv_priority` (Number)
 - `srv_weight` (Number)
+- `ttl` (Number) Defaults to `0`.
 
 ### Read-Only
 

@@ -54,7 +54,7 @@ func resourceDNSRecord() *schema.Resource {
 			},
 			"ttl": {
 				Type:     schema.TypeInt,
-				Required: true,
+				Optional: true,
 				Default:  0,
 			},
 
