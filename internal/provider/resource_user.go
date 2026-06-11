@@ -30,7 +30,7 @@ func resourceUser() *schema.Resource {
 			"permissions": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "[]",
+				Default:  "null",
 				ValidateDiagFunc: func(i interface{}, p cty.Path) diag.Diagnostics {
 					err := json.Unmarshal([]byte(i.(string)), &[]struct{}{})
 					if err != nil {
