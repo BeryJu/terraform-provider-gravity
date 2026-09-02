@@ -19,6 +19,9 @@ test:
 build: gen-api
 	go build -o ${BINARY}
 
+# The provider's schema uses EnvDefaultFunc, so tfplugindocs classifies any
+# attribute whose variable happens to be set as optional rather than required.
+# Clear all of them so generation does not depend on the ambient environment.
 gen:
 	golangci-lint run -v
-	GRAVITY_URL="" go generate
+	GRAVITY_URL="" GRAVITY_TOKEN="" GRAVITY_INSECURE="" go generate
