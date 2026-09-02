@@ -1,9 +1,7 @@
 package provider
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 
 	"beryju.io/gravity/api"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -38,6 +36,27 @@ func resourceDHCPScope() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  86400,
+			},
+			"hook": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Script executed on DHCP events for this scope.",
+			},
+			"statistics": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"usable": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"used": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
 			},
 			"ipam": {
 				Type:     schema.TypeMap,
@@ -89,8 +108,17 @@ func resourceDHCPScope() *schema.Resource {
 							Optional: true,
 						},
 						"value64": {
-							Type:     schema.TypeList,
-							Optional: true,
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "Option value as a list of base64-encoded strings.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"value_hex": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "Option value as a list of hex-encoded strings.",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -108,8 +136,8 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 		SubnetCidr: d.Get("subnet_cidr").(string),
 		Ttl:        int64(d.Get("lease_ttl").(int)),
 		Options:    []api.TypesDHCPOption{},
-		Dns:        &api.DhcpScopeDNS{},
 	}
+	m.Hook = d.Get("hook").(string)
 	m.Ipam = tfMap(d.Get("ipam").(map[string]interface{}))
 
 	options := d.Get("option").(*schema.Set)
@@ -127,18 +155,21 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 			aopt.Value.Set(api.PtrString(t))
 		}
 		if t, ok := values["value64"].([]interface{}); ok && len(t) > 0 {
-			values := make([]string, len(t))
-			for i, v := range t {
-				values[i] = v.(string)
-			}
-			aopt.Value64 = values
+			aopt.Value64 = sliceToString(t)
+		}
+		if t, ok := values["value_hex"].([]interface{}); ok && len(t) > 0 {
+			aopt.ValueHex = sliceToString(t)
 		}
 		m.Options = append(m.Options, aopt)
 	}
 
+	// Only send a DNS object when the block is actually configured: the server
+	// stores and returns exactly what it is given, so sending an empty object
+	// for an absent block would show up as drift on the next refresh.
 	dns := d.Get("dns").(*schema.Set)
 	for _, opt := range dns.List() {
 		values := opt.(map[string]interface{})
+		m.Dns = &api.DhcpScopeDNS{}
 
 		if t, ok := values["add_zone_in_hostname"].(bool); ok {
 			m.Dns.AddZoneInHostname = api.PtrBool(t)
@@ -147,11 +178,7 @@ func resourceDHCPScopeSchemaToModel(d *schema.ResourceData) (*api.DhcpAPIScopesP
 			m.Dns.Zone = api.PtrString(t)
 		}
 		if t, ok := values["search"].([]interface{}); ok && len(t) > 0 {
-			values := make([]string, len(t))
-			for i, v := range t {
-				values[i] = v.(string)
-			}
-			m.Dns.Search = values
+			m.Dns.Search = sliceToString(t)
 		}
 	}
 	return &m, nil
@@ -174,66 +201,45 @@ func resourceDHCPScopeCreate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDHCPScopeRead(ctx, d, m)
 }
 
-func flattenOptions(opts []api.TypesDHCPOption) *schema.Set {
-	var vopts []interface{}
-
-	for _, opt := range opts {
-		vopt := map[string]interface{}{}
-		vopt["tag"] = opt.Tag.Get()
-		vopt["tag_name"] = opt.TagName
-		vopt["value"] = opt.Value.Get()
-		if len(opt.Value64) > 0 {
-			vopt["value64"] = opt.Value64
+// flattenOptions and flattenDNS return plain []interface{} rather than a
+// *schema.Set. Building the set here needs a hash function that matches the
+// one the SDK derives from the schema; supplying our own instead silently
+// collapsed options that differed only in fields the hash failed to read,
+// leaving a permanent diff. Handing the SDK a slice lets it hash correctly.
+func flattenOptions(opts []api.TypesDHCPOption) []interface{} {
+	vopts := make([]interface{}, len(opts))
+	for i, opt := range opts {
+		vopts[i] = map[string]interface{}{
+			"tag":       int32Value(opt.Tag.Get()),
+			"tag_name":  stringValue(opt.TagName),
+			"value":     stringValue(opt.Value.Get()),
+			"value64":   stringSlice(opt.Value64),
+			"value_hex": stringSlice(opt.ValueHex),
 		}
-		vopts = append(vopts, vopt)
 	}
-
-	return schema.NewSet(func(i interface{}) int {
-		var buf = &bytes.Buffer{}
-		mCondition := i.(map[string]interface{})
-		if v, ok := mCondition["tag"].(int); ok {
-			fmt.Fprintf(buf, "%d-", v)
-		}
-		if v, ok := mCondition["tag_name"].(string); ok {
-			fmt.Fprintf(buf, "%s-", v)
-		}
-		if v, ok := mCondition["value"].(string); ok {
-			fmt.Fprintf(buf, "%s-", v)
-		}
-		if v, ok := mCondition["value64"].([]string); ok {
-			fmt.Fprintf(buf, "%s-", v)
-		}
-		return StringHashcode(buf.String())
-	}, vopts)
+	return vopts
 }
 
-func flattenDNS(dns *api.DhcpScopeDNS) *schema.Set {
-	var vdns []interface{}
-
-	if dns != nil {
-		vopt := map[string]interface{}{}
-		vopt["add_zone_in_hostname"] = dns.AddZoneInHostname
-		vopt["zone"] = dns.Zone
-		if len(dns.Search) > 0 {
-			vopt["search"] = dns.Search
-		}
-		vdns = append(vdns, vopt)
+func flattenDNS(dns *api.DhcpScopeDNS) []interface{} {
+	if dns == nil {
+		return []interface{}{}
 	}
+	return []interface{}{
+		map[string]interface{}{
+			"add_zone_in_hostname": boolValue(dns.AddZoneInHostname),
+			"zone":                 stringValue(dns.Zone),
+			"search":               stringSlice(dns.Search),
+		},
+	}
+}
 
-	return schema.NewSet(func(i interface{}) int {
-		var buf = &bytes.Buffer{}
-		mCondition := i.(map[string]interface{})
-		if v, ok := mCondition["add_zone_in_hostname"].(bool); ok {
-			fmt.Fprintf(buf, "%t-", v)
-		}
-		if v, ok := mCondition["zone"].(string); ok {
-			fmt.Fprintf(buf, "%s-", v)
-		}
-		if v, ok := mCondition["search"].([]string); ok {
-			fmt.Fprintf(buf, "%s-", v)
-		}
-		return StringHashcode(buf.String())
-	}, vdns)
+func flattenScopeStatistics(st api.DhcpAPIScopeStatistics) []interface{} {
+	return []interface{}{
+		map[string]interface{}{
+			"usable": int(st.Usable),
+			"used":   int(st.Used),
+		},
+	}
 }
 
 func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -249,13 +255,16 @@ func resourceDHCPScopeRead(ctx context.Context, d *schema.ResourceData, m interf
 		d.SetId("")
 		return diag.Diagnostics{}
 	}
-	setWrapper(d, "name", res.Scopes[0].Scope)
-	setWrapper(d, "default", res.Scopes[0].Default)
-	setWrapper(d, "subnet_cidr", res.Scopes[0].SubnetCidr)
-	setWrapper(d, "lease_ttl", res.Scopes[0].Ttl)
-	setWrapper(d, "ipam", res.Scopes[0].Ipam)
-	setWrapper(d, "option", flattenOptions(res.Scopes[0].Options))
-	setWrapper(d, "dns", flattenDNS(res.Scopes[0].Dns))
+	sc := res.Scopes[0]
+	setWrapper(d, "name", sc.Scope)
+	setWrapper(d, "default", sc.Default)
+	setWrapper(d, "subnet_cidr", sc.SubnetCidr)
+	setWrapper(d, "lease_ttl", sc.Ttl)
+	setWrapper(d, "hook", sc.Hook)
+	setWrapper(d, "ipam", sc.Ipam)
+	setWrapper(d, "option", flattenOptions(sc.Options))
+	setWrapper(d, "dns", flattenDNS(sc.Dns))
+	setWrapper(d, "statistics", flattenScopeStatistics(sc.Statistics))
 	return diags
 }
 

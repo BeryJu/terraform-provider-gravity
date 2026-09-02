@@ -2,12 +2,13 @@ package provider
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"hash/crc32"
 	"io"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -56,9 +57,11 @@ func httpToDiag(d *schema.ResourceData, r *http.Response, err error) diag.Diagno
 		return diag.Diagnostics{}
 	}
 	buff := &bytes.Buffer{}
-	_, er := io.Copy(buff, r.Body)
-	if er != nil {
-		log.Printf("[DEBUG] Gravity: failed to read response: %s", er.Error())
+	if r.Body != nil {
+		_, er := io.Copy(buff, r.Body)
+		if er != nil {
+			log.Printf("[DEBUG] Gravity: failed to read response: %s", er.Error())
+		}
 	}
 	log.Printf("[DEBUG] Gravity: error response: %s", buff.String())
 	return diag.Errorf("HTTP Error '%s' during request '%s %s': \"%s\"", err.Error(), r.Request.Method, r.Request.URL.Path, buff.String())
@@ -72,21 +75,70 @@ func tfMap(raw map[string]interface{}) map[string]string {
 	return x
 }
 
-// StringHashcode hashes a string to a unique hashcode.
-//
-// crc32 returns a uint32, but for our use we need
-// and non negative integer. Here we cast to an integer
-// and invert it if the result is negative.
-func StringHashcode(s string) int {
-	v := int(crc32.ChecksumIEEE([]byte(s)))
-	if v >= 0 {
-		return v
+// The API marshals optional fields as pointers and omits them entirely when
+// unset. Terraform has no notion of an unset primitive, so an absent value is
+// read back as the type's zero value.
+
+func stringValue(v *string) string {
+	if v == nil {
+		return ""
 	}
-	if -v >= 0 {
-		return -v
+	return *v
+}
+
+func boolValue(v *bool) bool {
+	if v == nil {
+		return false
 	}
-	// v == MinInt
-	return 0
+	return *v
+}
+
+func int32Value(v *int32) int {
+	if v == nil {
+		return 0
+	}
+	return int(*v)
+}
+
+func int64Value(v *int64) int {
+	if v == nil {
+		return 0
+	}
+	return int(*v)
+}
+
+// stringSlice normalises a possibly-nil API slice into an empty slice, so that
+// state matches a config that simply omitted the attribute.
+func stringSlice(v []string) []string {
+	if v == nil {
+		return []string{}
+	}
+	return v
+}
+
+// marshalJSONSlice encodes a slice as JSON, rendering a nil slice as `[]`
+// rather than `null` so it round-trips against a `jsonencode([])` config.
+func marshalJSONSlice[T any](in []T) (string, error) {
+	if in == nil {
+		in = []T{}
+	}
+	b, err := json.Marshal(in)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// validateDuration checks a value parses as a Go duration, e.g. "12h30m".
+func validateDuration(v any, p cty.Path) diag.Diagnostics {
+	if _, err := time.ParseDuration(v.(string)); err != nil {
+		return diag.Diagnostics{{
+			Severity: diag.Error,
+			Summary:  "Invalid duration",
+			Detail:   fmt.Sprintf("%q is not a valid duration: %s", v.(string), err),
+		}}
+	}
+	return nil
 }
 
 func validateMustBeLowercase(summary string) schema.SchemaValidateDiagFunc {

@@ -21,7 +21,22 @@ func TestAccResourceDNSRecord(t *testing.T) {
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "authoritative", "true"),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handler_configs", "[{\"type\":\"etcd\"}]"),
 					resource.TestCheckResourceAttr("gravity_dns_record.record", "fqdn", fmt.Sprintf("foo.%s.", rName)),
+					resource.TestCheckResourceAttr("gravity_dns_record.soa", "soa_mbox", "hostmaster.example.com."),
+					resource.TestCheckResourceAttr("gravity_dns_record.soa", "soa_serial", "2026090201"),
+					resource.TestCheckResourceAttr("gravity_dns_record.soa", "soa_refresh", "7200"),
+					resource.TestCheckResourceAttr("gravity_dns_record.soa", "soa_retry", "3600"),
+					resource.TestCheckResourceAttr("gravity_dns_record.soa", "soa_expire", "1209600"),
 				),
+			},
+			{
+				ResourceName:      "gravity_dns_record.record",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				ResourceName:      "gravity_dns_record.soa",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -45,6 +60,20 @@ resource "gravity_dns_record" "record" {
   uid = "0"
   data = "1.1.1.1"
   type = "A"
+}
+
+resource "gravity_dns_record" "soa" {
+  zone        = gravity_dns_zone.name.name
+  hostname    = "@"
+  uid         = "0"
+  type        = "SOA"
+  data        = "ns1.example.com."
+  ttl         = 3600
+  soa_mbox    = "hostmaster.example.com."
+  soa_serial  = 2026090201
+  soa_refresh = 7200
+  soa_retry   = 3600
+  soa_expire  = 1209600
 }
 `, name)
 }

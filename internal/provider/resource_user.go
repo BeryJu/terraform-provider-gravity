@@ -27,6 +27,13 @@ func resourceUser() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"password": {
+				Type:      schema.TypeString,
+				Optional:  true,
+				Sensitive: true,
+				Description: "Password for the user. The API never returns it, so it cannot be " +
+					"detected as drifted; leaving it unset keeps any existing password.",
+			},
 			"permissions": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -52,6 +59,9 @@ func resourceUserSchemaToModel(d *schema.ResourceData) (*api.AuthAPIUsersPutInpu
 		return nil, diag.FromErr(errors.Wrap(err, "failed to convert to json"))
 	}
 	m.Permissions = c
+	// The server keeps the current password when it receives an empty one, so
+	// omitting the attribute leaves the existing password untouched.
+	m.Password = d.Get("password").(string)
 
 	return &m, nil
 }
@@ -87,11 +97,13 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diag.Diagnostics{}
 	}
 	setWrapper(d, "username", res.Users[0].Username)
-	b, err := json.Marshal(res.Users[0].Permissions)
+	// A user with no permissions comes back as `null`, which would otherwise
+	// not match a `jsonencode([])` config.
+	b, err := marshalJSONSlice(res.Users[0].Permissions)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	setWrapper(d, "permissions", string(b))
+	setWrapper(d, "permissions", b)
 	return diags
 }
 

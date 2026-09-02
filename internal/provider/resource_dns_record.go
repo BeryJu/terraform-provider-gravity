@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"beryju.io/gravity/api"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -16,7 +17,7 @@ func resourceDNSRecord() *schema.Resource {
 		UpdateContext: resourceDNSRecordUpdate,
 		DeleteContext: resourceDNSRecordDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceDNSRecordImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"fqdn": {
@@ -74,6 +75,27 @@ func resourceDNSRecord() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
+
+			"soa_mbox": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"soa_serial": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"soa_refresh": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"soa_retry": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"soa_expire": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -99,6 +121,21 @@ func resourceDNSRecordSchemaToModel(d *schema.ResourceData) *api.DnsAPIRecordsPu
 	if v, ok := d.GetOk("srv_weight"); ok {
 		va := v.(int)
 		m.SrvWeight = api.PtrInt32(int32(va))
+	}
+	if v, ok := d.GetOk("soa_mbox"); ok {
+		m.SoaMbox = api.PtrString(v.(string))
+	}
+	if v, ok := d.GetOk("soa_serial"); ok {
+		m.SoaSerial = api.PtrInt32(int32(v.(int)))
+	}
+	if v, ok := d.GetOk("soa_refresh"); ok {
+		m.SoaRefresh = api.PtrInt32(int32(v.(int)))
+	}
+	if v, ok := d.GetOk("soa_retry"); ok {
+		m.SoaRetry = api.PtrInt32(int32(v.(int)))
+	}
+	if v, ok := d.GetOk("soa_expire"); ok {
+		m.SoaExpire = api.PtrInt32(int32(v.(int)))
 	}
 	return &m
 }
@@ -155,15 +192,23 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Diagnostics{}
 	}
 	d.SetId(resourceDNSRecordID(d))
-	setWrapper(d, "fqdn", res.Records[0].Fqdn)
-	setWrapper(d, "uid", res.Records[0].Uid)
-	setWrapper(d, "hostname", res.Records[0].Hostname)
-	setWrapper(d, "data", res.Records[0].Data)
-	setWrapper(d, "type", res.Records[0].Type)
-	setWrapper(d, "mx_preference", res.Records[0].MxPreference)
-	setWrapper(d, "srv_port", res.Records[0].SrvPort)
-	setWrapper(d, "srv_priority", res.Records[0].SrvPriority)
-	setWrapper(d, "srv_weight", res.Records[0].SrvWeight)
+	r := res.Records[0]
+	setWrapper(d, "zone", zone)
+	setWrapper(d, "fqdn", r.Fqdn)
+	setWrapper(d, "uid", r.Uid)
+	setWrapper(d, "hostname", r.Hostname)
+	setWrapper(d, "data", r.Data)
+	setWrapper(d, "type", string(r.Type))
+	setWrapper(d, "ttl", r.Ttl)
+	setWrapper(d, "mx_preference", int32Value(r.MxPreference))
+	setWrapper(d, "srv_port", int32Value(r.SrvPort))
+	setWrapper(d, "srv_priority", int32Value(r.SrvPriority))
+	setWrapper(d, "srv_weight", int32Value(r.SrvWeight))
+	setWrapper(d, "soa_mbox", stringValue(r.SoaMbox))
+	setWrapper(d, "soa_serial", int32Value(r.SoaSerial))
+	setWrapper(d, "soa_refresh", int32Value(r.SoaRefresh))
+	setWrapper(d, "soa_retry", int32Value(r.SoaRetry))
+	setWrapper(d, "soa_expire", int32Value(r.SoaExpire))
 	return diags
 }
 
@@ -192,4 +237,18 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 		return httpToDiag(d, hr, err)
 	}
 	return diag.Diagnostics{}
+}
+
+// resourceDNSRecordImport splits the composite ID back into the four
+// attributes Read needs, since none of them are derivable from the API alone.
+func resourceDNSRecordImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	parts := strings.SplitN(d.Id(), ":", 4)
+	if len(parts) != 4 {
+		return nil, fmt.Errorf("invalid ID %q, expected \"<zone>:<hostname>:<type>:<uid>\"", d.Id())
+	}
+	setWrapper(d, "zone", parts[0])
+	setWrapper(d, "hostname", parts[1])
+	setWrapper(d, "type", parts[2])
+	setWrapper(d, "uid", parts[3])
+	return []*schema.ResourceData{d}, nil
 }

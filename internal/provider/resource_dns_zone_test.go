@@ -20,7 +20,14 @@ func TestAccResourceDNSZone(t *testing.T) {
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "name", fmt.Sprintf("%s.", rName)),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "authoritative", "true"),
 					resource.TestCheckResourceAttr("gravity_dns_zone.name", "handler_configs", "[{\"to\":[\"1.1.1.1\"],\"type\":\"etcd\"}]"),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "hook", "// noop"),
+					resource.TestCheckResourceAttr("gravity_dns_zone.name", "record_count", "0"),
 				),
+			},
+			{
+				ResourceName:      "gravity_dns_zone.name",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -37,6 +44,7 @@ resource "gravity_dns_zone" "name" {
 	  to = ["1.1.1.1"],
     }
   ])
+  hook = "// noop"
 }
 `, name)
 }

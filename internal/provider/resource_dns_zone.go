@@ -38,6 +38,16 @@ func resourceDNSZone() *schema.Resource {
 				Optional: true,
 				Default:  86400,
 			},
+			"hook": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Script executed on `onDNSRequestBefore` and `onDNSRequestAfter` for this zone.",
+			},
+			"record_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of records currently in this zone.",
+			},
 			"handler_configs": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -57,6 +67,7 @@ func resourceDNSZoneSchemaToModel(d *schema.ResourceData) (*api.DnsAPIZonesPutIn
 	m := api.DnsAPIZonesPutInput{}
 	m.Authoritative = d.Get("authoritative").(bool)
 	m.DefaultTTL = int32(d.Get("default_ttl").(int))
+	m.Hook = d.Get("hook").(string)
 
 	var c []map[string]interface{}
 	err := json.NewDecoder(strings.NewReader(d.Get("handler_configs").(string))).Decode(&c)
@@ -101,11 +112,13 @@ func resourceDNSZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	setWrapper(d, "name", res.Zones[0].Name)
 	setWrapper(d, "authoritative", res.Zones[0].Authoritative)
 	setWrapper(d, "default_ttl", res.Zones[0].DefaultTTL)
-	b, err := json.Marshal(res.Zones[0].HandlerConfigs)
+	setWrapper(d, "hook", res.Zones[0].Hook)
+	setWrapper(d, "record_count", res.Zones[0].RecordCount)
+	b, err := marshalJSONSlice(res.Zones[0].HandlerConfigs)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	setWrapper(d, "handler_configs", string(b))
+	setWrapper(d, "handler_configs", b)
 	return diags
 }
 

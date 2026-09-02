@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"beryju.io/gravity/api"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -15,7 +17,7 @@ func resourceDHCPLease() *schema.Resource {
 		UpdateContext: resourceDHCPLeaseUpdate,
 		DeleteContext: resourceDHCPLeaseDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceDHCPLeaseImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"scope": {
@@ -44,6 +46,22 @@ func resourceDHCPLease() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"address_lease_time": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "Lease time offered to this client, as a Go duration (e.g. `12h`). Overrides the scope's `lease_ttl` when set.",
+				ValidateDiagFunc: validateDuration,
+			},
+			"dns_zone": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "DNS zone this lease is published into. Overrides the scope's `dns.zone` when set.",
+			},
+			"vendor": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Vendor reported by the client.",
+			},
 		},
 	}
 }
@@ -56,8 +74,14 @@ func resourceDHCPLeaseSchemaToModel(d *schema.ResourceData) *api.DhcpAPILeasesPu
 	if res := d.Get("reservation").(bool); res {
 		m.Expiry = api.PtrInt64(-1)
 	}
-	if d, dok := d.GetOk("description"); dok {
-		m.Description = api.PtrString(d.(string))
+	if v, ok := d.GetOk("description"); ok {
+		m.Description = api.PtrString(v.(string))
+	}
+	if v, ok := d.GetOk("address_lease_time"); ok {
+		m.AddressLeaseTime = v.(string)
+	}
+	if v, ok := d.GetOk("dns_zone"); ok {
+		m.DnsZone = api.PtrString(v.(string))
 	}
 	return &m
 }
@@ -99,13 +123,24 @@ func resourceDHCPLeaseRead(ctx context.Context, d *schema.ResourceData, m interf
 		d.SetId("")
 		return diag.Diagnostics{}
 	}
-	d.SetId(res.Leases[0].Identifier)
-	setWrapper(d, "identifier", res.Leases[0].Identifier)
-	setWrapper(d, "address", res.Leases[0].Address)
-	setWrapper(d, "hostname", res.Leases[0].Hostname)
-	setWrapper(d, "scope", res.Leases[0].ScopeKey)
-	setWrapper(d, "description", res.Leases[0].Description)
-	setWrapper(d, "reservation", *res.Leases[0].Expiry <= -1)
+	l := res.Leases[0]
+	d.SetId(l.Identifier)
+	setWrapper(d, "identifier", l.Identifier)
+	setWrapper(d, "address", l.Address)
+	setWrapper(d, "hostname", l.Hostname)
+	setWrapper(d, "scope", l.ScopeKey)
+	setWrapper(d, "description", l.Description)
+	setWrapper(d, "address_lease_time", l.AddressLeaseTime)
+	setWrapper(d, "dns_zone", stringValue(l.DnsZone))
+	// A reservation is encoded as a negative expiry. Leases that expire
+	// normally carry a timestamp, and the field is omitted entirely for
+	// leases the server has not assigned an expiry to.
+	setWrapper(d, "reservation", l.Expiry != nil && *l.Expiry <= -1)
+	if l.Info != nil {
+		setWrapper(d, "vendor", stringValue(l.Info.Vendor))
+	} else {
+		setWrapper(d, "vendor", "")
+	}
 	return diags
 }
 
@@ -130,4 +165,17 @@ func resourceDHCPLeaseDelete(ctx context.Context, d *schema.ResourceData, m inte
 		return httpToDiag(d, hr, err)
 	}
 	return diag.Diagnostics{}
+}
+
+// resourceDHCPLeaseImport accepts "<scope>/<identifier>", since the scope is
+// needed to look the lease up but is not recoverable from the identifier.
+func resourceDHCPLeaseImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	scope, identifier, ok := strings.Cut(d.Id(), "/")
+	if !ok {
+		return nil, fmt.Errorf("invalid ID %q, expected \"<scope>/<identifier>\"", d.Id())
+	}
+	setWrapper(d, "scope", scope)
+	setWrapper(d, "identifier", identifier)
+	d.SetId(identifier)
+	return []*schema.ResourceData{d}, nil
 }

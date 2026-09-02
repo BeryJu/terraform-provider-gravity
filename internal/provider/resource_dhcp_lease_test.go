@@ -22,7 +22,15 @@ func TestAccResourceDHCPLease(t *testing.T) {
 					resource.TestCheckResourceAttr("gravity_dhcp_scope.name", "option.#", "2"),
 					resource.TestCheckResourceAttr("gravity_dhcp_lease.record", "identifier", rName),
 					resource.TestCheckResourceAttr("gravity_dhcp_lease.record", "reservation", "true"),
+					resource.TestCheckResourceAttr("gravity_dhcp_lease.record", "address_lease_time", "12h"),
+					resource.TestCheckResourceAttr("gravity_dhcp_lease.record", "dns_zone", "foo.bar."),
 				),
+			},
+			{
+				ResourceName:      "gravity_dhcp_lease.record",
+				ImportState:       true,
+				ImportStateId:     fmt.Sprintf("%[1]s/%[1]s", rName),
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -59,6 +67,8 @@ resource "gravity_dhcp_lease" "record" {
   address = "10.10.10.25"
   identifier = "%[1]s"
   description = "foo"
+  address_lease_time = "12h"
+  dns_zone = "foo.bar."
 }
 `, name)
 }
