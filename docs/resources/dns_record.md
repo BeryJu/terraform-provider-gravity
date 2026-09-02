@@ -58,6 +58,11 @@ resource "gravity_dns_record" "record" {
 ### Optional
 
 - `mx_preference` (Number)
+- `soa_expire` (Number)
+- `soa_mbox` (String)
+- `soa_refresh` (Number)
+- `soa_retry` (Number)
+- `soa_serial` (Number)
 - `srv_port` (Number)
 - `srv_priority` (Number)
 - `srv_weight` (Number)
@@ -67,3 +72,14 @@ resource "gravity_dns_record" "record" {
 
 - `fqdn` (String) Generated.
 - `id` (String) The ID of this resource.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Records are identified by zone, hostname, type and uid, separated by colons
+terraform import gravity_dns_record.example 'my-domain.com.:www:A:0'
+```

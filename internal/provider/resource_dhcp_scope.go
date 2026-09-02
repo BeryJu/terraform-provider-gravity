@@ -43,17 +43,20 @@ func resourceDHCPScope() *schema.Resource {
 				Description: "Script executed on DHCP events for this scope.",
 			},
 			"statistics": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Address usage within the scope's subnet.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"usable": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Addresses available to hand out.",
 						},
 						"used": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Addresses currently leased.",
 						},
 					},
 				},

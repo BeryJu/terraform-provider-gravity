@@ -86,12 +86,14 @@ resource "gravity_dns_zone" "example" {
 
 - `default` (Boolean) Defaults to `false`.
 - `dns` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--dns))
+- `hook` (String) Script executed on DHCP events for this scope.
 - `lease_ttl` (Number) Defaults to `86400`.
 - `option` (Block Set) (see [below for nested schema](#nestedblock--option))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `statistics` (List of Object) Address usage within the scope's subnet. Generated. (see [below for nested schema](#nestedatt--statistics))
 
 <a id="nestedblock--dns"></a>
 ### Nested Schema for `dns`
@@ -111,4 +113,24 @@ Optional:
 - `tag` (Number)
 - `tag_name` (String)
 - `value` (String)
-- `value64` (List of String)
+- `value64` (List of String) Option value as a list of base64-encoded strings.
+- `value_hex` (List of String) Option value as a list of hex-encoded strings.
+
+
+<a id="nestedatt--statistics"></a>
+### Nested Schema for `statistics`
+
+Read-Only:
+
+- `usable` (Number)
+- `used` (Number)
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import gravity_dhcp_scope.example 'my-scope'
+```

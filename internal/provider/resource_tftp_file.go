@@ -48,8 +48,9 @@ func resourceTFTPFile() *schema.Resource {
 				Description:  "File contents, base64-encoded.",
 			},
 			"size_bytes": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Size of the stored file.",
 			},
 		},
 	}

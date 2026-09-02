@@ -59,9 +59,23 @@ resource "gravity_dhcp_lease" "record" {
 
 ### Optional
 
+- `address_lease_time` (String) Lease time offered to this client, as a Go duration (e.g. `12h`). Overrides the scope's `lease_ttl` when set.
 - `description` (String)
+- `dns_zone` (String) DNS zone this lease is published into. Overrides the scope's `dns.zone` when set.
 - `reservation` (Boolean) Defaults to `true`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `vendor` (String) Vendor reported by the client. Generated.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Leases are identified by the scope they belong to and their identifier
+terraform import gravity_dhcp_lease.example 'my-scope/aa:bb:cc:dd:ee:ff'
+```

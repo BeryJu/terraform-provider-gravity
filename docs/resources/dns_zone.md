@@ -63,7 +63,19 @@ resource "gravity_dns_zone" "forward" {
 
 - `authoritative` (Boolean) Defaults to `false`.
 - `default_ttl` (Number) Defaults to `86400`.
+- `hook` (String) Script executed on `onDNSRequestBefore` and `onDNSRequestAfter` for this zone.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `record_count` (Number) Number of records currently in this zone. Generated.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import gravity_dns_zone.example 'my-domain.com.'
+```

@@ -29,7 +29,7 @@ func resourceAPIToken() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,
-				Description: "The generated token.",
+				Description: "Token used to authenticate against the API.",
 			},
 		},
 	}

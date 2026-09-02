@@ -47,8 +47,19 @@ resource "gravity_user" "admin" {
 
 ### Optional
 
+- `password` (String, Sensitive) Password for the user. The API never returns it, so it cannot be detected as drifted; leaving it unset keeps any existing password.
 - `permissions` (String) Defaults to `[]`.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import gravity_user.example 'my-username'
+```
